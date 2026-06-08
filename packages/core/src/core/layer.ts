@@ -1,11 +1,11 @@
-// Import shared types and registries
-import type { Layer as SharedLayer } from "@light-render/shared";
+// Import shared types and the single validation utility needed
+import type { LayerType, Layer as SharedLayer } from "@light-render/shared";
+import { validateLayer } from "@light-render/shared";
+
+// Import core registries and base classes
 import { BaseEffect } from "../effects/base";
 import { BaseProperty } from "../properties/base";
 import { effectRegistry, propertyRegistry } from "../utils/registry";
-
-// Extract the strict union type directly from the Zod schema
-export type LayerType = SharedLayer["type"];
 
 /**
  * A layer in a segment (image, video, text, etc.).
@@ -26,40 +26,31 @@ export class Layer {
     }
 
     /**
-     * Create layer from dictionary, instantiating plugins via registries.
+     * Create layer from raw dictionary, validating via shared utils and instantiating plugins.
      */
-    static fromDict(data: Record<string, unknown>): Layer {
-        const validTypes: LayerType[] = ["image", "video", "text", "color"];
-        const rawType = data.type as string;
-        const layerType: LayerType = validTypes.includes(rawType as LayerType)
-            ? (rawType as LayerType)
-            : "image";
+    static fromDict(data: unknown): Layer {
+        // 1. Validate and clean the raw layer data.
+        // Zod automatically and recursively validates all nested properties and effects here.
+        const validatedData = validateLayer(data);
 
-        const layer = new Layer({
-            id: data.id as string,
-            src: data.src as string,
-            type: layerType,
-            properties: {},
-            effects: [],
-        });
+        // 2. Instantiate the Layer class with the strictly typed, clean data
+        const layer = new Layer(validatedData);
 
-        // Parse and instantiate properties safely
-        if (data.properties) {
-            const props = data.properties as Record<string, Record<string, unknown>>;
-            for (const [propName, propData] of Object.entries(props)) {
-                const propType = (propData.type as string) || propName;
-                const PropClass = propertyRegistry.get(propType);
-                layer.properties[propName] = PropClass.fromDict(propData);
-            }
+        // 3. Parse and instantiate properties safely via the registry
+        for (const [propName, propData] of Object.entries(validatedData.properties)) {
+            const propDataRecord = propData as Record<string, unknown>;
+            const propType = (propDataRecord.type as string) || propName;
+
+            const PropClass = propertyRegistry.get(propType);
+            layer.properties[propName] = PropClass.fromDict(propDataRecord);
         }
 
-        // Parse and instantiate effects safely
-        if (data.effects) {
-            const effects = data.effects as Array<Record<string, unknown>>;
-            for (const effectData of effects) {
-                const EffectClass = effectRegistry.get(effectData.type as string);
-                layer.effects.push(EffectClass.fromDict(effectData));
-            }
+        // 4. Parse and instantiate effects safely via the registry
+        for (const effectData of validatedData.effects) {
+            const EffectClass = effectRegistry.get(effectData.type);
+
+            // effectData is already strictly typed as `Effect` (which extends Record<string, unknown>)
+            layer.effects.push(EffectClass.fromDict(effectData));
         }
 
         return layer;

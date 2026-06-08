@@ -1,5 +1,8 @@
-// Import core modules and the SharedLayer type for strict casting
-import type { Layer as SharedLayer, Segment as SharedSegment } from "@light-render/shared";
+// Import shared types and validation utilities
+import type { Segment as SharedSegment } from "@light-render/shared";
+import { validateSegment } from "@light-render/shared";
+
+// Import core layer class
 import { Layer } from "./layer";
 
 /**
@@ -15,21 +18,16 @@ export class Segment {
         this.id = data.id;
         this.audio = data.audio;
         this.duration = data.duration;
-        this.layers = data.layers.map((layerData) =>
-            Layer.fromDict(layerData as unknown as Record<string, unknown>),
-        );
+        // Layer.fromDict now expects `unknown`, so we pass the raw layer data directly
+        this.layers = data.layers.map((layerData) => Layer.fromDict(layerData));
     }
 
     /**
-     * Create segment from dictionary.
+     * Create segment from raw dictionary, validating via shared utils.
      */
-    static fromDict(data: Record<string, unknown>): Segment {
-        return new Segment({
-            id: data.id as string | number,
-            audio: data.audio as string | undefined,
-            // Cast to the strict SharedLayer array type expected by the Segment constructor
-            layers: (data.layers as SharedLayer[]) || [],
-            duration: data.duration as number,
-        });
+    static fromDict(data: unknown): Segment {
+        // Validate and clean the raw segment data
+        const validatedData = validateSegment(data);
+        return new Segment(validatedData);
     }
 }
