@@ -1,13 +1,24 @@
-// Standard TS utility for constructor types
-type Constructor<T> = new (...args: any[]) => T;
+// Import base classes to strictly type the global registries
+import { BaseEffect } from "../effects/base";
+import { BaseProperty } from "../properties/base";
+
+/**
+ * Strict interface for plugin classes.
+ * We only require the static factory method. By omitting the constructor
+ * signature and returning void from the decorator, we achieve 100% type safety
+ * without relying on 'any' or contravariance workarounds.
+ */
+type PluginClass<T> = {
+    fromDict(data: Record<string, unknown>): T;
+};
 
 /**
  * Generic registry for plugins (effects, properties, etc.).
- * Mirrors the Python Registry decorator pattern.
+ * Mirrors the Python Registry decorator pattern with strict type safety.
  */
 export class Registry<T> {
     private name: string;
-    private _registry: Map<string, Constructor<T>>;
+    private _registry: Map<string, PluginClass<T>>;
 
     constructor(name: string) {
         this.name = name;
@@ -16,21 +27,21 @@ export class Registry<T> {
 
     /**
      * Decorator to register a plugin class.
+     * Returns void to tell TypeScript not to replace the original class type.
      */
     register(name: string) {
-        return (cls: Constructor<T>) => {
+        return (cls: PluginClass<T>): void => {
             if (this._registry.has(name)) {
                 throw new Error(`${this.name} '${name}' already registered`);
             }
             this._registry.set(name, cls);
-            return cls;
         };
     }
 
     /**
      * Get a registered plugin class by name.
      */
-    get(name: string): Constructor<T> {
+    get(name: string): PluginClass<T> {
         const cls = this._registry.get(name);
         if (!cls) {
             throw new Error(
@@ -46,16 +57,8 @@ export class Registry<T> {
     list(): string[] {
         return Array.from(this._registry.keys());
     }
-
-    /**
-     * Create an instance of a registered plugin.
-     */
-    create(name: string, ...args: any[]): T {
-        const cls = this.get(name);
-        return new cls(...args);
-    }
 }
 
-// Global singleton registries
-export const effectRegistry = new Registry<any>("Effect");
-export const propertyRegistry = new Registry<any>("Property");
+// Global singleton registries strictly typed to their base classes
+export const effectRegistry = new Registry<BaseEffect>("Effect");
+export const propertyRegistry = new Registry<BaseProperty>("Property");

@@ -1,5 +1,5 @@
-// Import core modules
-import type { Segment as SharedSegment } from "@light-render/shared";
+// Import core modules and the SharedLayer type for strict casting
+import type { Layer as SharedLayer, Segment as SharedSegment } from "@light-render/shared";
 import { Layer } from "./layer";
 
 /**
@@ -15,18 +15,21 @@ export class Segment {
         this.id = data.id;
         this.audio = data.audio;
         this.duration = data.duration;
-        this.layers = data.layers.map((layerData) => Layer.fromDict(layerData));
+        this.layers = data.layers.map((layerData) =>
+            Layer.fromDict(layerData as unknown as Record<string, unknown>),
+        );
     }
 
     /**
      * Create segment from dictionary.
      */
-    static fromDict(data: Record<string, any>): Segment {
+    static fromDict(data: Record<string, unknown>): Segment {
         return new Segment({
-            id: data.id,
-            audio: data.audio,
-            layers: data.layers,
-            duration: data.duration,
+            id: data.id as string | number,
+            audio: data.audio as string | undefined,
+            // Cast to the strict SharedLayer array type expected by the Segment constructor
+            layers: (data.layers as SharedLayer[]) || [],
+            duration: data.duration as number,
         });
     }
 }
