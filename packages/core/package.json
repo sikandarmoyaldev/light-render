@@ -1,0 +1,19 @@
+{
+    "name": "@light-render/core",
+    "version": "1.0.0",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc -w"
+    },
+    "dependencies": {
+        "@light-render/shared": "workspace:*",
+        "@types/fluent-ffmpeg": "^2.1.28",
+        "fluent-ffmpeg": "^2.1.3"
+    },
+    "devDependencies": {
+        "typescript": "^6.0.3"
+    }
+}

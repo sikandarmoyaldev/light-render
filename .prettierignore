@@ -1,0 +1,13 @@
+# Build outputs
+.next/
+dist/
+build/
+coverage/
+
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+
+# Configuration / System
+.env*
+.git/

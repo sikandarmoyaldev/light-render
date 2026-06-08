@@ -1,0 +1,48 @@
+{
+    // --- Prettier Framework Integrations ---
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+
+    // --- Clean Explorer Side-Panel Trimming ---
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/dist": true,
+        "**/.turbo": true,
+        "**/.DS_Store": true,
+        "**/*.log": true,
+        "pnpm-debug.log*": true,
+        "**/.git": true // Changed to true to completely hide the .git folder from the sidebar
+    },
+
+    // --- Search Engine Performance Optimization ---
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/dist": true,
+        "**/pnpm-lock.yaml": true,
+        "**/.turbo": true
+    },
+
+    // --- File Nesting View Rules ---
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.expand": false,
+    "explorer.fileNesting.patterns": {
+        ".env.local": ".env.*",
+        "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .prettier*, prettier*, eslint*, tsconfig*, next.config*",
+        "tailwind.config.*": "tailwind.config.js, postcss.config.js, postcss.config.mjs"
+    },
+
+    // --- Automated Linting & Imports Optimization ---
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit",
+        "source.fixAll.eslint": "explicit"
+    },
+
+    // --- Tailwind CSS IntelliSense Layout Configurations ---
+    "tailwindCSS.experimental.classRegex": ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]* acquittal)[\"'`]"],
+    "editor.quickSuggestions": {
+        "strings": "on"
+    }
+}
