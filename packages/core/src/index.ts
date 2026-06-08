@@ -17,3 +17,4 @@ export { ZoomEffect } from "./effects/zoom";
 // Built-in properties
 export { BlurProperty } from "./properties/blur";
 export { PositionProperty } from "./properties/position";
+export { ScaleProperty } from "./properties/scale";

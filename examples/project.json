@@ -12,6 +12,16 @@
             "duration": 5.0,
             "layers": [
                 {
+                    "id": "background",
+                    "src": "https://i.pinimg.com/736x/13/be/95/13be95147b920e7c4ee958ff30db7a11.jpg",
+                    "type": "image",
+                    "properties": {
+                        "scale": { "type": "scale", "value": 3 },
+                        "blur": { "type": "blur", "radius": 25 }
+                    },
+                    "effects": []
+                },
+                {
                     "id": "foreground",
                     "src": "https://i.pinimg.com/736x/13/be/95/13be95147b920e7c4ee958ff30db7a11.jpg",
                     "type": "image",
@@ -24,12 +34,19 @@
             "duration": 5.0,
             "layers": [
                 {
-                    "id": "foreground",
+                    "id": "background",
                     "src": "https://i.pinimg.com/736x/1b/0d/6d/1b0d6db5f3384645c3d72858bea57301.jpg",
                     "type": "image",
                     "properties": {
-                        "position": { "type": "position", "x": 0, "y": 30 }
+                        "scale": { "type": "scale", "value": 3 },
+                        "blur": { "type": "blur", "radius": 25 }
                     },
+                    "effects": []
+                },
+                {
+                    "id": "foreground",
+                    "src": "https://i.pinimg.com/736x/1b/0d/6d/1b0d6db5f3384645c3d72858bea57301.jpg",
+                    "type": "image",
                     "effects": []
                 }
             ]
@@ -39,11 +56,21 @@
             "duration": 5.0,
             "layers": [
                 {
+                    "id": "background",
+                    "src": "https://i.pinimg.com/474x/1b/e4/88/1be4887ab171cd498e51685d5a67479d.jpg",
+                    "type": "image",
+                    "properties": {
+                        "scale": { "type": "scale", "value": 5 },
+                        "blur": { "type": "blur", "radius": 25 }
+                    },
+                    "effects": []
+                },
+                {
                     "id": "foreground",
                     "src": "https://i.pinimg.com/474x/1b/e4/88/1be4887ab171cd498e51685d5a67479d.jpg",
                     "type": "image",
                     "properties": {
-                        "position": { "type": "position", "x": 30, "y": 0 }
+                        "scale": { "type": "scale", "value": 1.5 }
                     },
                     "effects": []
                 }
