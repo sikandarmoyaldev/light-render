@@ -7,6 +7,7 @@ import path from "node:path";
 
 // Import core modules
 import { Config } from "../core/config";
+import { Layer } from "../core/layer";
 import { Segment } from "../core/segment";
 
 /**
@@ -14,11 +15,9 @@ import { Segment } from "../core/segment";
  * Implements SHA-256 hashing for automatic asset deduplication.
  */
 async function downloadAsset(url: string, tempDir: string): Promise<string> {
-    // Generate a short SHA-256 hash of the URL to use as the filename
     const hash = createHash("sha256").update(url).digest("hex").slice(0, 16);
     const localPath = path.join(tempDir, `${hash}.jpg`);
 
-    // Skip download if file already exists (Deduplication!)
     if (existsSync(localPath)) {
         console.log(`[AssetManager] Cache hit for ${url}`);
         return localPath;
@@ -26,9 +25,7 @@ async function downloadAsset(url: string, tempDir: string): Promise<string> {
 
     console.log(`[AssetManager] Downloading ${url}...`);
     const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`Failed to download ${url}: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Failed to download ${url}: ${response.statusText}`);
 
     const buffer = Buffer.from(await response.arrayBuffer());
     await writeFile(localPath, buffer);
@@ -37,7 +34,6 @@ async function downloadAsset(url: string, tempDir: string): Promise<string> {
 
 /**
  * FFmpeg implementation of the base renderer.
- * Dynamically constructs complex filtergraphs for multi-layer, multi-segment compositing.
  */
 export class FfmpegRenderer {
     private config: Config;
@@ -47,18 +43,29 @@ export class FfmpegRenderer {
     }
 
     /**
-     * Renders an array of segments to a single output file.
+     * Helper to extract filter snippets from layer properties (e.g., boxblur).
+     * Excludes position strings (x=...:y=...) which are handled by the overlay filter.
      */
+    private getPropertyFilters(layer: Layer): string {
+        return Object.values(layer.properties)
+            .map((p) =>
+                p.calculateValue(
+                    this.config.width,
+                    this.config.height,
+                    this.config.width,
+                    this.config.height,
+                ),
+            )
+            .filter((v) => typeof v === "string" && v.length > 0 && !v.startsWith("x="))
+            .join(",");
+    }
+
     async render(segments: Segment[], outputPath: string): Promise<void> {
         console.log(`[FfmpegRenderer] Starting render to ${outputPath}...`);
 
-        // 0. Prepare local asset cache directory
         const assetsDir = path.join(process.cwd(), "temp", "assets");
-        if (!existsSync(assetsDir)) {
-            await mkdir(assetsDir, { recursive: true });
-        }
+        if (!existsSync(assetsDir)) await mkdir(assetsDir, { recursive: true });
 
-        // Download all HTTP assets to local cache before building FFmpeg command
         for (const segment of segments) {
             for (const layer of segment.layers) {
                 if (layer.src.startsWith("http://") || layer.src.startsWith("https://")) {
@@ -72,11 +79,9 @@ export class FfmpegRenderer {
         let inputIndex = 0;
         const segmentOutputs: string[] = [];
 
-        // 1. Process each segment and build the massive filtergraph
         for (const segment of segments) {
             const totalDuration = segment.duration;
 
-            // Add inputs for this segment's layers
             segment.layers.forEach((layer) => {
                 if (layer.type === "image") {
                     args.push(
@@ -92,24 +97,36 @@ export class FfmpegRenderer {
                 }
             });
 
-            // Build filtergraph for this segment's layers
             let lastVideoLabel = `${inputIndex}:v`;
 
             segment.layers.forEach((layer, layerIndex) => {
                 const currentIndex = inputIndex + layerIndex;
 
+                // 1. Extract property filters (Blur, etc.)
+                const propFilters = this.getPropertyFilters(layer);
+
                 if (layerIndex === 0) {
-                    // Background layer: "w-auto h-auto" behavior (object-fit: contain)
-                    // CRITICAL FIX: Added setsar=1 and format=yuv420p to force identical
-                    // Sample Aspect Ratios and pixel formats, preventing concat crashes.
-                    filterParts.push(
-                        `[${currentIndex}:v]scale=${this.config.width}:${this.config.height}:force_original_aspect_ratio=decrease,pad=${this.config.width}:${this.config.height}:(ow-iw)/2:(oh-ih)/2:color=black@0,format=yuv420p,setsar=1[bg_${currentIndex}]`,
-                    );
-                    lastVideoLabel = `bg_${currentIndex}`;
+                    // BACKGROUND LAYER
+                    // Scale -> Pad -> Format -> Setsar -> [Properties like Blur]
+                    let bgChain = `scale=${this.config.width}:${this.config.height}:force_original_aspect_ratio=decrease,pad=${this.config.width}:${this.config.height}:(ow-iw)/2:(oh-ih)/2:color=black@0,format=yuv420p,setsar=1`;
+
+                    if (propFilters) bgChain += `,${propFilters}`;
+
+                    const bgLabel = `bg_${currentIndex}`;
+                    filterParts.push(`[${currentIndex}:v]${bgChain}[${bgLabel}]`);
+                    lastVideoLabel = bgLabel;
                 } else {
-                    // Foreground layer: apply effects, then overlay
+                    // FOREGROUND LAYER
                     let currentLabel = `${currentIndex}:v`;
 
+                    // Apply Properties (Blur) BEFORE effects and overlay
+                    if (propFilters) {
+                        const propLabel = `prop_${currentIndex}`;
+                        filterParts.push(`[${currentLabel}]${propFilters}[${propLabel}]`);
+                        currentLabel = propLabel;
+                    }
+
+                    // Apply Effects (Zoom)
                     layer.effects.forEach((effect) => {
                         const effectFilter = effect.buildFilterString(
                             currentIndex,
@@ -120,6 +137,7 @@ export class FfmpegRenderer {
                         currentLabel = effectFilter.match(/\[([^\]]+)\]$/)?.[1] || currentLabel;
                     });
 
+                    // Calculate Position for Overlay
                     let overlayPos: string | number = "x=0:y=0";
                     const posProp = layer.properties["position"];
                     if (posProp) {
@@ -139,32 +157,23 @@ export class FfmpegRenderer {
                 }
             });
 
-            // Apply duration limit and reset timestamps
             const segOutLabel = `seg_${segment.id}`;
             filterParts.push(
                 `[${lastVideoLabel}]trim=duration=${totalDuration},setpts=PTS-STARTPTS[${segOutLabel}]`,
             );
             segmentOutputs.push(segOutLabel);
-
             inputIndex += segment.layers.length;
         }
 
-        // 2. Concatenate all segments
         if (segmentOutputs.length > 1) {
             const concatInputs = segmentOutputs.map((label) => `[${label}]`).join("");
             filterParts.push(`${concatInputs}concat=n=${segmentOutputs.length}:v=1:a=0[final_out]`);
         }
 
-        // 3. Add filter complex FIRST, then map
-        if (filterParts.length > 0) {
-            args.push("-filter_complex", filterParts.join(";"));
-        }
+        if (filterParts.length > 0) args.push("-filter_complex", filterParts.join(";"));
 
-        if (segmentOutputs.length > 1) {
-            args.push("-map", "[final_out]");
-        } else if (segmentOutputs.length === 1) {
-            args.push("-map", `[${segmentOutputs[0]}]`);
-        }
+        if (segmentOutputs.length > 1) args.push("-map", "[final_out]");
+        else if (segmentOutputs.length === 1) args.push("-map", `[${segmentOutputs[0]}]`);
 
         const videoCodec = this.config.codec === "h264" ? "libx264" : this.config.codec;
         args.push("-c:v", videoCodec, "-pix_fmt", "yuv420p", "-preset", "fast", outputPath);
@@ -173,8 +182,8 @@ export class FfmpegRenderer {
 
         return new Promise((resolve, reject) => {
             const ffmpegProcess = spawn("ffmpeg", args);
-
             let errorOutput = "";
+
             ffmpegProcess.stderr.on("data", (data: Buffer) => {
                 const message = data.toString();
                 errorOutput += message;
