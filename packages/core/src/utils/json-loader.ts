@@ -2,8 +2,8 @@ import fs from "fs";
 
 // Import shared schema and core classes
 import { ProjectSchema } from "@light-render/shared";
-import { Config } from "../core/config.js";
-import { Segment } from "../core/segment.js";
+import { Config } from "../core/config";
+import { Segment } from "../core/segment";
 
 /**
  * Load config and segments from a JSON file.

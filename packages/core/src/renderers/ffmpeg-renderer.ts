@@ -2,8 +2,8 @@
 import { spawn } from "child_process";
 
 // Import core modules
-import { Config } from "../core/config.js";
-import { Segment } from "../core/segment.js";
+import { Config } from "../core/config";
+import { Segment } from "../core/segment";
 
 /**
  * FFmpeg implementation of the base renderer.

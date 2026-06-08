@@ -1,7 +1,7 @@
 // Import core modules and renderer
-import { FfmpegRenderer } from "../renderers/ffmpeg_renderer.js";
-import { Config } from "./config.js";
-import { Segment } from "./segment.js";
+import { FfmpegRenderer } from "../renderers/ffmpeg-renderer";
+import { Config } from "./config";
+import { Segment } from "./segment";
 
 /**
  * Main rendering engine orchestrator.

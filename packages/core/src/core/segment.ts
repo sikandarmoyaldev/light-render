@@ -1,6 +1,6 @@
 // Import core modules
 import type { Segment as SharedSegment } from "@light-render/shared";
-import { Layer } from "./layer.js";
+import { Layer } from "./layer";
 
 /**
  * Represents a distinct segment of the video timeline.
