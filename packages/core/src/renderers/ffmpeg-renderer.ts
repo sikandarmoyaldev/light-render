@@ -79,7 +79,6 @@ export class FfmpegRenderer {
             // Add inputs for this segment's layers
             segment.layers.forEach((layer) => {
                 if (layer.type === "image") {
-                    // Local images only need loop and framerate
                     args.push(
                         "-loop",
                         "1",
@@ -101,10 +100,10 @@ export class FfmpegRenderer {
 
                 if (layerIndex === 0) {
                     // Background layer: "w-auto h-auto" behavior (object-fit: contain)
-                    // 1. Scale down to fit within canvas while preserving aspect ratio
-                    // 2. Pad with transparent black to center and fill canvas
+                    // CRITICAL FIX: Added setsar=1 and format=yuv420p to force identical
+                    // Sample Aspect Ratios and pixel formats, preventing concat crashes.
                     filterParts.push(
-                        `[${currentIndex}:v]scale=${this.config.width}:${this.config.height}:force_original_aspect_ratio=decrease,pad=${this.config.width}:${this.config.height}:(ow-iw)/2:(oh-ih)/2:color=black@0[bg_${currentIndex}]`,
+                        `[${currentIndex}:v]scale=${this.config.width}:${this.config.height}:force_original_aspect_ratio=decrease,pad=${this.config.width}:${this.config.height}:(ow-iw)/2:(oh-ih)/2:color=black@0,format=yuv420p,setsar=1[bg_${currentIndex}]`,
                     );
                     lastVideoLabel = `bg_${currentIndex}`;
                 } else {
@@ -134,7 +133,7 @@ export class FfmpegRenderer {
 
                     const nextLabel = `overlay_${currentIndex}`;
                     filterParts.push(
-                        `[${lastVideoLabel}][${currentLabel}]overlay=${overlayPos}:format=auto[${nextLabel}]`,
+                        `[${lastVideoLabel}][${currentLabel}]overlay=${overlayPos}:format=auto,setsar=1[${nextLabel}]`,
                     );
                     lastVideoLabel = nextLabel;
                 }
@@ -156,7 +155,7 @@ export class FfmpegRenderer {
             filterParts.push(`${concatInputs}concat=n=${segmentOutputs.length}:v=1:a=0[final_out]`);
         }
 
-        // 3. CRITICAL: Add filter complex FIRST, then map
+        // 3. Add filter complex FIRST, then map
         if (filterParts.length > 0) {
             args.push("-filter_complex", filterParts.join(";"));
         }
