@@ -13,8 +13,8 @@
             "layers": [
                 {
                     "id": "background",
-                    "src": "color=c=red",
-                    "type": "color",
+                    "src": "https://picsum.photos/id/237/1920/1080",
+                    "type": "image",
                     "properties": {},
                     "effects": []
                 }
@@ -26,8 +26,8 @@
             "layers": [
                 {
                     "id": "background",
-                    "src": "color=c=blue",
-                    "type": "color",
+                    "src": "https://picsum.photos/id/238/1920/1080",
+                    "type": "image",
                     "properties": {},
                     "effects": []
                 }
