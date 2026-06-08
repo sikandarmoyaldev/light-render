@@ -67,3 +67,10 @@ Thumbs.db
 # ==========================================
 .turbo/          # Ignored just in case (since we aren't using it)
 .pnpm-store/     # Local pnpm store if configured 
+
+# ==========================================
+# TEMP & MEDIA OUTPUTS
+# ==========================================
+temp/
+*.mp3
+*.mp4

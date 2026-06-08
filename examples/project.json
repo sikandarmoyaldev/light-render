@@ -1,0 +1,37 @@
+{
+    "config": {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30,
+        "codec": "h264",
+        "quality": "high"
+    },
+    "segments": [
+        {
+            "id": 1,
+            "duration": 3.0,
+            "layers": [
+                {
+                    "id": "background",
+                    "src": "color=c=red",
+                    "type": "color",
+                    "properties": {},
+                    "effects": []
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "duration": 2.0,
+            "layers": [
+                {
+                    "id": "background",
+                    "src": "color=c=blue",
+                    "type": "color",
+                    "properties": {},
+                    "effects": []
+                }
+            ]
+        }
+    ]
+}

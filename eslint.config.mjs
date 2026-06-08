@@ -1,12 +1,12 @@
-import js from '@eslint/js';
-import prettier from 'eslint-plugin-prettier/recommended';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
+import js from "@eslint/js";
+import prettier from "eslint-plugin-prettier/recommended";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
 export default tseslint.config(
     // 1. Ignore build outputs and node_modules
     {
-        ignores: ['**/dist/**', '**/node_modules/**', '**/*.js', '**/*.cjs'],
+        ignores: ["**/dist/**", "**/node_modules/**", "**/*.js", "**/*.cjs"],
     },
 
     // 2. Apply base recommended rules
@@ -26,9 +26,9 @@ export default tseslint.config(
             },
         },
         rules: {
-            'prettier/prettier': 'error',
-            '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/explicit-function-return-type': 'off',
+            "prettier/prettier": "error",
+            "@typescript-eslint/no-explicit-any": "warn",
+            "@typescript-eslint/explicit-function-return-type": "off",
         },
     },
 );
