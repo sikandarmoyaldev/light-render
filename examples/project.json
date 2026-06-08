@@ -9,7 +9,7 @@
     "segments": [
         {
             "id": 1,
-            "duration": 5.0,
+            "duration": 15.0,
             "layers": [
                 {
                     "id": "background",
@@ -25,7 +25,16 @@
                     "id": "foreground",
                     "src": "https://i.pinimg.com/736x/13/be/95/13be95147b920e7c4ee958ff30db7a11.jpg",
                     "type": "image",
-                    "effects": []
+                    "effects": [
+                        {
+                            "type": "repeating-zoom",
+                            "strength": 1.15,
+                            "zoomInDuration": 3,
+                            "zoomOutDuration": 3,
+                            "pauseDuration": 3,
+                            "easing": "ease-in-out"
+                        }
+                    ]
                 }
             ]
         },

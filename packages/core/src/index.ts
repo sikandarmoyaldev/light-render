@@ -12,7 +12,7 @@ export { effectRegistry, propertyRegistry } from "./utils/registry";
 export { FfmpegRenderer } from "./renderers/ffmpeg-renderer";
 
 // Built-in effects
-export { ZoomEffect } from "./effects/zoom";
+export { RepeatingZoomEffect } from "./effects/repeating-zoom";
 
 // Built-in properties
 export { BlurProperty } from "./properties/blur";
