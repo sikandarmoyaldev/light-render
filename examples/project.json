@@ -15,9 +15,6 @@
                     "id": "foreground",
                     "src": "https://i.pinimg.com/736x/13/be/95/13be95147b920e7c4ee958ff30db7a11.jpg",
                     "type": "image",
-                    "properties": {
-                        "blur": { "type": "blur", "radius": 25 }
-                    },
                     "effects": []
                 }
             ]
@@ -31,7 +28,7 @@
                     "src": "https://i.pinimg.com/736x/1b/0d/6d/1b0d6db5f3384645c3d72858bea57301.jpg",
                     "type": "image",
                     "properties": {
-                        "blur": { "type": "blur", "radius": 100 }
+                        "position": { "type": "position", "x": 0, "y": 30 }
                     },
                     "effects": []
                 }
@@ -46,7 +43,7 @@
                     "src": "https://i.pinimg.com/474x/1b/e4/88/1be4887ab171cd498e51685d5a67479d.jpg",
                     "type": "image",
                     "properties": {
-                        "blur": { "type": "blur", "radius": 0 }
+                        "position": { "type": "position", "x": 30, "y": 0 }
                     },
                     "effects": []
                 }

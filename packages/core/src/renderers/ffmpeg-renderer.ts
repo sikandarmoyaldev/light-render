@@ -10,18 +10,11 @@ import { Config } from "../core/config";
 import { Layer } from "../core/layer";
 import { Segment } from "../core/segment";
 
-/**
- * Downloads an HTTP asset to a local temporary directory.
- * Implements SHA-256 hashing for automatic asset deduplication.
- */
 async function downloadAsset(url: string, tempDir: string): Promise<string> {
     const hash = createHash("sha256").update(url).digest("hex").slice(0, 16);
     const localPath = path.join(tempDir, `${hash}.jpg`);
 
-    if (existsSync(localPath)) {
-        console.log(`[AssetManager] Cache hit for ${url}`);
-        return localPath;
-    }
+    if (existsSync(localPath)) return localPath;
 
     console.log(`[AssetManager] Downloading ${url}...`);
     const response = await fetch(url);
@@ -32,9 +25,6 @@ async function downloadAsset(url: string, tempDir: string): Promise<string> {
     return localPath;
 }
 
-/**
- * FFmpeg implementation of the base renderer.
- */
 export class FfmpegRenderer {
     private config: Config;
 
@@ -42,10 +32,6 @@ export class FfmpegRenderer {
         this.config = config;
     }
 
-    /**
-     * Helper to extract filter snippets from layer properties (e.g., boxblur).
-     * Excludes position strings (x=...:y=...) which are handled by the overlay filter.
-     */
     private getPropertyFilters(layer: Layer): string {
         return Object.values(layer.properties)
             .map((p) =>
@@ -97,64 +83,58 @@ export class FfmpegRenderer {
                 }
             });
 
-            let lastVideoLabel = `${inputIndex}:v`;
+            // ✅ FIX: Create a black base canvas (Acts like Remotion's AbsoluteFill)
+            const baseLabel = `base_${segment.id}`;
+            // Note: FFmpeg's size parameter uses 'x' (1920x1080), not ':'
+            filterParts.push(
+                `color=c=black:s=${this.config.width}x${this.config.height}:r=${this.config.fps}[${baseLabel}]`,
+            );
+            let lastVideoLabel = baseLabel;
 
             segment.layers.forEach((layer, layerIndex) => {
                 const currentIndex = inputIndex + layerIndex;
+                let currentLabel = `${currentIndex}:v`;
+                let effectCounter = 0;
 
-                // 1. Extract property filters (Blur, etc.)
+                // 1. Apply Properties (Blur, etc.)
                 const propFilters = this.getPropertyFilters(layer);
-
-                if (layerIndex === 0) {
-                    // BACKGROUND LAYER
-                    // Scale -> Pad -> Format -> Setsar -> [Properties like Blur]
-                    let bgChain = `scale=${this.config.width}:${this.config.height}:force_original_aspect_ratio=decrease,pad=${this.config.width}:${this.config.height}:(ow-iw)/2:(oh-ih)/2:color=black@0,format=yuv420p,setsar=1`;
-
-                    if (propFilters) bgChain += `,${propFilters}`;
-
-                    const bgLabel = `bg_${currentIndex}`;
-                    filterParts.push(`[${currentIndex}:v]${bgChain}[${bgLabel}]`);
-                    lastVideoLabel = bgLabel;
-                } else {
-                    // FOREGROUND LAYER
-                    let currentLabel = `${currentIndex}:v`;
-
-                    // Apply Properties (Blur) BEFORE effects and overlay
-                    if (propFilters) {
-                        const propLabel = `prop_${currentIndex}`;
-                        filterParts.push(`[${currentLabel}]${propFilters}[${propLabel}]`);
-                        currentLabel = propLabel;
-                    }
-
-                    // Apply Effects (Zoom)
-                    layer.effects.forEach((effect) => {
-                        const effectFilter = effect.buildFilterString(
-                            currentIndex,
-                            totalDuration,
-                            this.config.fps,
-                        );
-                        filterParts.push(effectFilter);
-                        currentLabel = effectFilter.match(/\[([^\]]+)\]$/)?.[1] || currentLabel;
-                    });
-
-                    // Calculate Position for Overlay
-                    let overlayPos: string | number = "x=0:y=0";
-                    const posProp = layer.properties["position"];
-                    if (posProp) {
-                        overlayPos = posProp.calculateValue(
-                            this.config.width,
-                            this.config.height,
-                            this.config.width,
-                            this.config.height,
-                        );
-                    }
-
-                    const nextLabel = `overlay_${currentIndex}`;
-                    filterParts.push(
-                        `[${lastVideoLabel}][${currentLabel}]overlay=${overlayPos}:format=auto,setsar=1[${nextLabel}]`,
-                    );
-                    lastVideoLabel = nextLabel;
+                if (propFilters) {
+                    const propLabel = `prop_${currentIndex}`;
+                    filterParts.push(`[${currentLabel}]${propFilters}[${propLabel}]`);
+                    currentLabel = propLabel;
                 }
+
+                // 2. Apply Effects (Zoom) using dynamic labels
+                layer.effects.forEach((effect) => {
+                    const outLabel = `fx_${currentIndex}_${effectCounter++}`;
+                    const effectFilter = effect.buildFilterString(
+                        currentLabel,
+                        outLabel,
+                        totalDuration,
+                        this.config.fps,
+                    );
+                    filterParts.push(effectFilter);
+                    currentLabel = outLabel;
+                });
+
+                // 3. Calculate Position for Overlay (Defaults to center if no position property)
+                let overlayPos: string | number = "x=(W-w)/2:y=(H-h)/2";
+                const posProp = layer.properties["position"];
+                if (posProp) {
+                    overlayPos = posProp.calculateValue(
+                        this.config.width,
+                        this.config.height,
+                        this.config.width,
+                        this.config.height,
+                    );
+                }
+
+                // 4. Overlay onto the accumulated canvas
+                const nextLabel = `overlay_${segment.id}_${layerIndex}`;
+                filterParts.push(
+                    `[${lastVideoLabel}][${currentLabel}]overlay=${overlayPos}:format=auto,setsar=1[${nextLabel}]`,
+                );
+                lastVideoLabel = nextLabel;
             });
 
             const segOutLabel = `seg_${segment.id}`;

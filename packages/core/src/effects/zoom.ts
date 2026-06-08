@@ -2,9 +2,6 @@
 import { effectRegistry } from "../utils/registry";
 import { BaseEffect } from "./base";
 
-/**
- * Parameter interface for the Zoom effect.
- */
 export interface ZoomParams {
     start: number;
     end: number;
@@ -12,10 +9,6 @@ export interface ZoomParams {
     center: [number, number];
 }
 
-/**
- * Built-in Zoom effect utilizing FFmpeg zoompan.
- * Applies 9K oversampling to eliminate sub-pixel jitter.
- */
 @effectRegistry.register("zoom")
 export class ZoomEffect extends BaseEffect {
     public params: ZoomParams;
@@ -26,9 +19,14 @@ export class ZoomEffect extends BaseEffect {
     }
 
     /**
-     * Generates the strict FFmpeg filter string for this effect.
+     * Generates the FFmpeg filter string using dynamic input/output labels.
      */
-    buildFilterString(layerIndex: number, duration: number, fps: number): string {
+    buildFilterString(
+        inputLabel: string,
+        outputLabel: string,
+        duration: number,
+        fps: number,
+    ): string {
         const totalFrames = Math.floor(duration * fps);
         const zoomIncrement = (this.params.end - this.params.start) / totalFrames;
 
@@ -36,7 +34,8 @@ export class ZoomEffect extends BaseEffect {
         const xExpr = "iw/2-(iw/zoom/2)";
         const yExpr = "ih/2-(ih/zoom/2)";
 
-        return `[${layerIndex}:v]zoompan=z='${zoomExpr}':d=${totalFrames}:x='${xExpr}':y='${yExpr}':s='9600x5400',scale=1920:1080:flags=bicubic[zoomed_${layerIndex}]`;
+        // Use dynamic inputLabel and outputLabel
+        return `[${inputLabel}]zoompan=z='${zoomExpr}':d=${totalFrames}:x='${xExpr}':y='${yExpr}':s='9600x5400',scale=1920:1080:flags=bicubic[${outputLabel}]`;
     }
 
     toDict(): Record<string, unknown> {
