@@ -79,7 +79,7 @@ export class FfmpegRenderer {
             // Add inputs for this segment's layers
             segment.layers.forEach((layer) => {
                 if (layer.type === "image") {
-                    // Local images only need loop and framerate (no HTTP reconnect flags needed!)
+                    // Local images only need loop and framerate
                     args.push(
                         "-loop",
                         "1",
@@ -100,9 +100,11 @@ export class FfmpegRenderer {
                 const currentIndex = inputIndex + layerIndex;
 
                 if (layerIndex === 0) {
-                    // Background layer: scale, crop, and FORCE yuv420p
+                    // Background layer: "w-auto h-auto" behavior (object-fit: contain)
+                    // 1. Scale down to fit within canvas while preserving aspect ratio
+                    // 2. Pad with transparent black to center and fill canvas
                     filterParts.push(
-                        `[${currentIndex}:v]scale=${this.config.width}:${this.config.height}:force_original_aspect_ratio=increase,crop=${this.config.width}:${this.config.height},format=yuv420p[bg_${currentIndex}]`,
+                        `[${currentIndex}:v]scale=${this.config.width}:${this.config.height}:force_original_aspect_ratio=decrease,pad=${this.config.width}:${this.config.height}:(ow-iw)/2:(oh-ih)/2:color=black@0[bg_${currentIndex}]`,
                     );
                     lastVideoLabel = `bg_${currentIndex}`;
                 } else {
@@ -154,7 +156,7 @@ export class FfmpegRenderer {
             filterParts.push(`${concatInputs}concat=n=${segmentOutputs.length}:v=1:a=0[final_out]`);
         }
 
-        // 3. CRITICAL FIX: Add filter complex FIRST, then map
+        // 3. CRITICAL: Add filter complex FIRST, then map
         if (filterParts.length > 0) {
             args.push("-filter_complex", filterParts.join(";"));
         }
