@@ -8,7 +8,8 @@
         "build": "pnpm -r run build",
         "dev": "pnpm -r --parallel run dev",
         "lint": "eslint .",
-        "format": "prettier --write ."
+        "format": "prettier --write .",
+        "start:example": "tsx examples/render.ts"
     },
     "dependencies": {
         "@light-render/core": "workspace:*"
@@ -23,6 +24,7 @@
         "eslint-plugin-prettier": "^5.5.6",
         "globals": "^17.6.0",
         "prettier": "^3.8.3",
+        "tsx": "^4.22.4",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.60.1"
     }

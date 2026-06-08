@@ -1,24 +1,28 @@
-import fs from "fs";
+// Node.js file system module
+import fs from "node:fs";
 
-// Import shared schema and core classes
-import { ProjectSchema } from "@light-render/shared";
-import { Config } from "../core/config";
-import { Segment } from "../core/segment";
+// Import shared validation utilities
+import type { Project } from "@light-render/shared";
+import { validateProject } from "@light-render/shared";
 
 /**
- * Load config and segments from a JSON file.
- * Validates against the shared Zod schema before instantiation.
+ * Loads and validates a JSON project file.
+ * Returns the raw validated project data (not instantiated classes).
+ * The Engine will handle converting to core classes during render.
+ *
+ * @param filePath - Path to the JSON project file
+ * @returns Validated project object with raw segment/layer data
  */
-export function loadFromJson(jsonPath: string): { config: Config; segments: Segment[] } {
-    const rawData = fs.readFileSync(jsonPath, "utf-8");
-    const data = JSON.parse(rawData);
+export function loadFromJson(filePath: string): Project {
+    // Read the JSON file
+    const fileContent = fs.readFileSync(filePath, "utf-8");
 
-    // Strict validation
-    const validated = ProjectSchema.parse(data);
+    // Parse JSON
+    const rawData = JSON.parse(fileContent);
 
-    // Instantiate core classes
-    const config = new Config(validated.config);
-    const segments = validated.segments.map((seg) => Segment.fromDict(seg));
+    // Validate using shared Zod schema
+    const validatedProject = validateProject(rawData);
 
-    return { config, segments };
+    // Return raw validated data (Engine will instantiate classes)
+    return validatedProject;
 }

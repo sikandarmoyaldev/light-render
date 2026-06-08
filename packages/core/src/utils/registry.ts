@@ -4,13 +4,22 @@ import { BaseProperty } from "../properties/base";
 
 /**
  * Strict interface for plugin classes.
- * We only require the static factory method. By omitting the constructor
- * signature and returning void from the decorator, we achieve 100% type safety
- * without relying on 'any' or contravariance workarounds.
+ * We only require the static factory method.
  */
-type PluginClass<T> = {
+export type PluginClass<T> = {
     fromDict(data: Record<string, unknown>): T;
 };
+
+/**
+ * Options for registering a plugin.
+ */
+export interface RegisterOptions {
+    /**
+     * If true, allows overwriting an existing plugin with the same name.
+     * @default false
+     */
+    overwrite?: boolean;
+}
 
 /**
  * Generic registry for plugins (effects, properties, etc.).
@@ -29,13 +38,27 @@ export class Registry<T> {
      * Decorator to register a plugin class.
      * Returns void to tell TypeScript not to replace the original class type.
      */
-    register(name: string) {
+    register(name: string, options: RegisterOptions = {}) {
         return (cls: PluginClass<T>): void => {
-            if (this._registry.has(name)) {
-                throw new Error(`${this.name} '${name}' already registered`);
+            if (this._registry.has(name) && !options.overwrite) {
+                throw new Error(
+                    `${this.name} '${name}' already registered. Use { overwrite: true } to replace it.`,
+                );
             }
             this._registry.set(name, cls);
         };
+    }
+
+    /**
+     * Manually register a plugin class (non-decorator usage).
+     */
+    registerClass(name: string, cls: PluginClass<T>, options: RegisterOptions = {}): void {
+        if (this._registry.has(name) && !options.overwrite) {
+            throw new Error(
+                `${this.name} '${name}' already registered. Use { overwrite: true } to replace it.`,
+            );
+        }
+        this._registry.set(name, cls);
     }
 
     /**
@@ -56,6 +79,13 @@ export class Registry<T> {
      */
     list(): string[] {
         return Array.from(this._registry.keys());
+    }
+
+    /**
+     * Check if a plugin is registered.
+     */
+    has(name: string): boolean {
+        return this._registry.has(name);
     }
 }
 
