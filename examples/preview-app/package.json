@@ -8,7 +8,8 @@
         "build": "tsc && vite build"
     },
     "dependencies": {
-        "@light-render/preview": "workspace:*",
+        "@light-render/core": "workspace:*",
+        "@light-render/player": "workspace:*",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
     },

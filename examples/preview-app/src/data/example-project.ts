@@ -1,5 +1,4 @@
-import type { PreviewProject } from "@light-render/preview";
-
+import type { PreviewProject } from "@light-render/core";
 /**
  * Example project matching the FFmpeg render test case.
  * Demonstrates:

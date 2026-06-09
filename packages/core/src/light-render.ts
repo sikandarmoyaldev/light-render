@@ -1,6 +1,5 @@
-// Import core engine, config, and registries
+// Import config and registries (browser-safe)
 import { Config } from "./core/config";
-import { Engine } from "./core/engine";
 import type { BaseEffect } from "./effects/base";
 import type { BaseProperty } from "./properties/base";
 import { effectRegistry, propertyRegistry, type PluginClass } from "./utils/registry";
@@ -71,12 +70,28 @@ export interface LightRenderOptions {
 }
 
 /**
- * Creates a configured LightRender engine instance.
+ * Creates a configured Config instance for LightRender.
  *
  * Built-in plugins are auto-registered via decorators on import.
  * Custom plugins can be added via the effects/properties options.
+ *
+ * For rendering, use:
+ * - Browser: renderFrame() for canvas preview
+ * - Node.js: new Engine(config) for FFmpeg rendering
+ *
+ * @example
+ * // Browser preview
+ * import { LightRender, renderFrame } from "@light-render/core";
+ * const config = LightRender({ width: 1920, height: 1080 });
+ * renderFrame(ctx, project, currentTime);
+ *
+ * // Node.js rendering
+ * import { LightRender, Engine } from "@light-render/core";
+ * const config = LightRender({ width: 1920, height: 1080 });
+ * const engine = new Engine(config);
+ * await engine.render(project, "output.mp4");
  */
-export function LightRender(options: LightRenderOptions = {}): Engine {
+export function LightRender(options: LightRenderOptions = {}): Config {
     // Extract options with defaults
     const {
         width = 1920,
@@ -111,17 +126,14 @@ export function LightRender(options: LightRenderOptions = {}): Engine {
         propertyRegistry.registerClass(name, plugin as PluginClass<BaseProperty>, { overwrite });
     }
 
-    // Create Config instance
-    const config = new Config({
+    // Return Config instance (users can then create Engine manually if needed)
+    return new Config({
         width,
         height,
         fps,
         codec,
         quality,
     });
-
-    // Return new Engine instance
-    return new Engine(config);
 }
 
 /**

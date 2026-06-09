@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { usePlayer } from "../hooks/use-player";
 import { Controls } from "./controls";
 
-export interface PlayerProps {
+export interface LightRenderPlayerProps {
     project: PreviewProject;
     autoPlay?: boolean;
     loop?: boolean;
@@ -17,7 +17,7 @@ export interface PlayerProps {
     onEnd?: () => void;
 }
 
-export const Player: React.FC<PlayerProps> = ({
+export const LightRenderPlayer: React.FC<LightRenderPlayerProps> = ({
     project,
     autoPlay = false,
     loop = true,

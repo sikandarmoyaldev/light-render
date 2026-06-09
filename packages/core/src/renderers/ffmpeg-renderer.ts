@@ -1,4 +1,4 @@
-// Node.js native child process, file system, and crypto modules
+// Node.js native modules (only imported in Node environment)
 import { spawn } from "child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -9,6 +9,7 @@ import path from "node:path";
 import { Config } from "../core/config";
 import { Layer } from "../core/layer";
 import { Segment } from "../core/segment";
+import type { Renderer } from "../types/render"; // ✅ Import interface
 
 async function downloadAsset(url: string, tempDir: string): Promise<string> {
     const hash = createHash("sha256").update(url).digest("hex").slice(0, 16);
@@ -25,17 +26,31 @@ async function downloadAsset(url: string, tempDir: string): Promise<string> {
     return localPath;
 }
 
-export class FfmpegRenderer {
-    private config: Config;
+/**
+ * FFmpeg-based renderer for Node.js environments.
+ * Implements the Renderer interface for backend-agnostic orchestration.
+ */
+export class FfmpegRenderer implements Renderer {
+    public config: Config; // ✅ Make public for potential config updates
 
     constructor(config: Config) {
         this.config = config;
     }
 
     /**
-     * Builds FFmpeg filter strings for all properties on a layer.
-     * Uses the unified `buildFfmpegFilterString()` method from BaseProperty.
+     * Check if FFmpeg is installed and available in the system PATH.
      */
+    async isAvailable(): Promise<boolean> {
+        try {
+            // ✅ FIX: Use dynamic import() instead of require() to satisfy ESLint
+            const { execSync } = await import("child_process");
+            execSync("ffmpeg -version", { stdio: "ignore" });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     private getPropertyFilters(layer: Layer): string {
         return Object.values(layer.properties)
             .map((p) => p.buildFfmpegFilterString())
@@ -80,7 +95,6 @@ export class FfmpegRenderer {
                 }
             });
 
-            // ✅ FIX: Create a black base canvas (Acts like Remotion's AbsoluteFill)
             const baseLabel = `base_${segment.id}`;
             filterParts.push(
                 `color=c=black:s=${this.config.width}x${this.config.height}:r=${this.config.fps}[${baseLabel}]`,
@@ -92,7 +106,6 @@ export class FfmpegRenderer {
                 let currentLabel = `${currentIndex}:v`;
                 let effectCounter = 0;
 
-                // 1. Apply Properties (Blur, Scale, etc.) via unified method
                 const propFilters = this.getPropertyFilters(layer);
                 if (propFilters) {
                     const propLabel = `prop_${currentIndex}`;
@@ -100,10 +113,8 @@ export class FfmpegRenderer {
                     currentLabel = propLabel;
                 }
 
-                // 2. Apply Effects (Zoom) via unified method
                 layer.effects.forEach((effect) => {
                     const outLabel = `fx_${currentIndex}_${effectCounter++}`;
-                    // ✅ UPDATED: Use new clear method name
                     const effectFilter = effect.buildFfmpegFilterString(
                         currentLabel,
                         outLabel,
@@ -114,15 +125,12 @@ export class FfmpegRenderer {
                     currentLabel = outLabel;
                 });
 
-                // 3. Calculate Position for Overlay (via unified method)
                 let overlayPos: string | number = "x=(W-w)/2:y=(H-h)/2";
                 const posProp = layer.properties["position"];
                 if (posProp) {
-                    // ✅ UPDATED: Use new clear method name
                     overlayPos = posProp.buildFfmpegFilterString();
                 }
 
-                // 4. Overlay onto the accumulated canvas
                 const nextLabel = `overlay_${segment.id}_${layerIndex}`;
                 filterParts.push(
                     `[${lastVideoLabel}][${currentLabel}]overlay=${overlayPos}:format=auto,setsar=1[${nextLabel}]`,

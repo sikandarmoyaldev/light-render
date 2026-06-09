@@ -3,7 +3,27 @@
     "version": "1.0.0",
     "type": "module",
     "main": "dist/index.js",
+    "module": "dist/index.js",
     "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        },
+        "./node": {
+            "types": "./dist/node.d.ts",
+            "default": "./dist/node.js"
+        }
+    },
+    "browser": {
+        "./dist/renderers/ffmpeg-renderer.js": false,
+        "./dist/utils/json-loader.js": false,
+        "child_process": false,
+        "node:crypto": false,
+        "node:fs": false,
+        "node:fs/promises": false,
+        "node:path": false
+    },
     "scripts": {
         "build": "tsc",
         "dev": "tsc -w"
