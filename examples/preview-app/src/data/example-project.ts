@@ -23,13 +23,16 @@ export const exampleProject: PreviewProject = {
                     name: "background",
                     positionX: 50,
                     positionY: 50,
-                    scale: 3,
-                    blur: 25,
+                    scale: 1,
+                    blur: 0,
                     media: {
                         type: "image",
                         src: "https://i.pinimg.com/736x/13/be/95/13be95147b920e7c4ee958ff30db7a11.jpg",
                     },
-                    properties: {},
+                    properties: {
+                        scale: { type: "scale", value: 3 },
+                        blur: { type: "blur", radius: 25 },
+                    },
                     effects: [],
                 },
                 {
@@ -66,13 +69,16 @@ export const exampleProject: PreviewProject = {
                     name: "background",
                     positionX: 50,
                     positionY: 50,
-                    scale: 3,
-                    blur: 25,
+                    scale: 1,
+                    blur: 0,
                     media: {
                         type: "image",
                         src: "https://i.pinimg.com/736x/1b/0d/6d/1b0d6db5f3384645c3d72858bea57301.jpg",
                     },
-                    properties: {},
+                    properties: {
+                        scale: { type: "scale", value: 3 },
+                        blur: { type: "blur", radius: 25 },
+                    },
                     effects: [],
                 },
                 {
@@ -100,13 +106,16 @@ export const exampleProject: PreviewProject = {
                     name: "background",
                     positionX: 50,
                     positionY: 50,
-                    scale: 5,
-                    blur: 25,
+                    scale: 1,
+                    blur: 0,
                     media: {
                         type: "image",
                         src: "https://i.pinimg.com/474x/1b/e4/88/1be4887ab171cd498e51685d5a67479d.jpg",
                     },
-                    properties: {},
+                    properties: {
+                        scale: { type: "scale", value: 5 },
+                        blur: { type: "blur", radius: 25 },
+                    },
                     effects: [],
                 },
                 {
@@ -114,13 +123,15 @@ export const exampleProject: PreviewProject = {
                     name: "foreground",
                     positionX: 50,
                     positionY: 50,
-                    scale: 1.5,
+                    scale: 1,
                     blur: 0,
                     media: {
                         type: "image",
                         src: "https://i.pinimg.com/474x/1b/e4/88/1be4887ab171cd498e51685d5a67479d.jpg",
                     },
-                    properties: {},
+                    properties: {
+                        scale: { type: "scale", value: 1.5 },
+                    },
                     effects: [],
                 },
             ],

@@ -43,19 +43,6 @@ const parseLayer = (layer: RawLayer): ParsedLayer => {
     };
 };
 
-/**
- * Renders a single parsed layer onto the canvas context.
- *
- * Simple pipeline (matches FFmpeg overlay with cover behavior):
- * 1. Save context state
- * 2. Translate to center
- * 3. Apply position property
- * 4. Apply blur filter
- * 5. Apply scale property (via ctx.scale)
- * 6. Apply effect transforms (zoom)
- * 7. Draw image with cover behavior (w-auto h-auto)
- * 8. Restore context
- */
 const renderLayer = async (
     ctx: CanvasRenderingContext2D,
     parsedLayer: ParsedLayer,
@@ -67,42 +54,21 @@ const renderLayer = async (
     try {
         const img = await loadImage(parsedLayer.src);
 
-        ctx.save();
-
-        // ✅ STEP 1: Move origin to center of canvas
-        ctx.translate(canvasWidth / 2, canvasHeight / 2);
-
-        // ✅ STEP 2: Apply position property
-        const positionProp = parsedLayer.properties["position"];
-        if (positionProp) {
-            positionProp.applyToContext(ctx, canvasWidth, canvasHeight, img.width, img.height);
-        }
-
-        // ✅ STEP 3: Apply blur filter
-        const blurProp = parsedLayer.properties["blur"];
-        if (blurProp) {
-            blurProp.applyToContext(ctx, canvasWidth, canvasHeight, img.width, img.height);
-        }
-
-        // ✅ STEP 4: Apply scale property (matches FFmpeg's scale filter)
+        // ✅ STEP 1: Extract scale value
+        let baseScale = 1;
         const scaleProp = parsedLayer.properties["scale"];
-        if (scaleProp) {
-            scaleProp.applyToContext(ctx, canvasWidth, canvasHeight, img.width, img.height);
+        if (scaleProp && "value" in scaleProp) {
+            baseScale = (scaleProp as any).value;
         }
 
-        // ✅ STEP 5: Apply effect transforms (zoom)
-        for (const effect of parsedLayer.effects) {
-            const transform = effect.calculateTransform(timeInSegment, segmentDuration);
-            if (transform.scale !== 1) {
-                ctx.scale(transform.scale, transform.scale);
-            }
-            if (transform.offsetX !== 0 || transform.offsetY !== 0) {
-                ctx.translate(transform.offsetX, transform.offsetY);
-            }
+        // ✅ STEP 2: Extract blur value
+        let blurRadius = 0;
+        const blurProp = parsedLayer.properties["blur"];
+        if (blurProp && "radius" in blurProp) {
+            blurRadius = (blurProp as any).radius;
         }
 
-        // ✅ STEP 6: Calculate cover dimensions (w-auto h-auto)
-        // This matches FFmpeg's overlay behavior - image fills canvas maintaining aspect ratio
+        // ✅ STEP 3: Calculate cover dimensions FIRST (before any transforms)
         const imgAspectRatio = img.width / img.height;
         const canvasAspectRatio = canvasWidth / canvasHeight;
 
@@ -110,16 +76,48 @@ const renderLayer = async (
         let drawHeight: number;
 
         if (imgAspectRatio > canvasAspectRatio) {
-            // Image is wider - fit to width, height will be auto
             drawWidth = canvasWidth;
             drawHeight = canvasWidth / imgAspectRatio;
         } else {
-            // Image is taller - fit to height, width will be auto
             drawHeight = canvasHeight;
             drawWidth = canvasHeight * imgAspectRatio;
         }
 
-        // ✅ STEP 7: Draw image centered at origin
+        // ✅ STEP 4: Apply scale to draw dimensions
+        drawWidth *= baseScale;
+        drawHeight *= baseScale;
+
+        ctx.save();
+
+        // ✅ STEP 5: Move origin to center of canvas
+        ctx.translate(canvasWidth / 2, canvasHeight / 2);
+
+        // ✅ STEP 6: Apply position property
+        const positionProp = parsedLayer.properties["position"];
+        if (positionProp) {
+            positionProp.applyToContext(ctx, canvasWidth, canvasHeight, img.width, img.height);
+        }
+
+        // ✅ STEP 7: Apply blur filter
+        if (blurRadius > 0) {
+            ctx.filter = `blur(${blurRadius}px)`;
+        }
+
+        // ✅ STEP 8: Apply effect transforms (zoom)
+        for (const effect of parsedLayer.effects) {
+            const transform = effect.calculateTransform(timeInSegment, segmentDuration);
+            if (transform.scale !== 1) {
+                ctx.scale(transform.scale, transform.scale);
+                // Also scale the draw dimensions
+                drawWidth *= transform.scale;
+                drawHeight *= transform.scale;
+            }
+            if (transform.offsetX !== 0 || transform.offsetY !== 0) {
+                ctx.translate(transform.offsetX, transform.offsetY);
+            }
+        }
+
+        // ✅ STEP 9: Draw image centered at origin
         ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
 
         ctx.restore();
@@ -157,7 +155,6 @@ export const renderFrame = async (
 
     if (!activeSegment) return;
 
-    // Render layers in order (background first, then foreground)
     for (const rawLayer of activeSegment.layers) {
         const parsedLayer = parseLayer(rawLayer);
         await renderLayer(
