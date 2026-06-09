@@ -27,7 +27,7 @@ export const exampleProject: PreviewProject = {
                     blur: 25,
                     media: {
                         type: "image",
-                        src: "https://plus.unsplash.com/premium_photo-1734460426124-331f69ae6530?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTN8fDklM0ExNnxlbnwwfHwwfHx8MA%3D%3D",
+                        src: "https://i.pinimg.com/736x/13/be/95/13be95147b920e7c4ee958ff30db7a11.jpg",
                     },
                     properties: {},
                     effects: [],
