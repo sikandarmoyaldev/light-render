@@ -1,5 +1,5 @@
 {
-    "name": "@light-render/preview",
+    "name": "@light-render/player",
     "version": "1.0.0",
     "type": "module",
     "main": "./dist/index.js",
@@ -16,7 +16,8 @@
     },
     "dependencies": {
         "react": "^18.2.0",
-        "react-dom": "^18.2.0"
+        "react-dom": "^18.2.0",
+        "@light-render/core": "workspace:*"
     },
     "devDependencies": {
         "@types/react": "^18.2.0",
