@@ -9,14 +9,11 @@
         "dev": "pnpm -r --parallel run dev",
         "lint": "eslint .",
         "format": "prettier --write .",
-        "start:example": "tsx examples/render.ts"
-    },
-    "dependencies": {
-        "@light-render/core": "workspace:*"
+        "example:render": "pnpm --filter @light-render/example-cli run render",
+        "example:preview": "pnpm --filter @light-render/example-preview run dev"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
-        "@types/node": "^25.9.2",
         "@typescript-eslint/eslint-plugin": "^8.60.1",
         "@typescript-eslint/parser": "^8.60.1",
         "eslint": "^10.4.1",
@@ -24,8 +21,6 @@
         "eslint-plugin-prettier": "^5.5.6",
         "globals": "^17.6.0",
         "prettier": "^3.8.3",
-        "tsx": "^4.22.4",
-        "typescript": "^6.0.3",
         "typescript-eslint": "^8.60.1"
     }
 }
