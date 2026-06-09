@@ -1,4 +1,3 @@
-// Image caching for 60fps performance
 const imageCache = new Map<string, HTMLImageElement>();
 
 export const loadImage = (src: string): Promise<HTMLImageElement> => {
@@ -9,7 +8,13 @@ export const loadImage = (src: string): Promise<HTMLImageElement> => {
 
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.crossOrigin = "anonymous";
+
+        // ✅ FIX: Removed `img.crossOrigin = "anonymous"`
+        // Pinterest and many CDNs block CORS requests.
+        // Since we are only drawing to the canvas for visual preview
+        // (not exporting pixel data via toDataURL/getImageData),
+        // we don't need CORS and can safely load the image normally.
+
         img.onload = () => {
             imageCache.set(src, img);
             resolve(img);
