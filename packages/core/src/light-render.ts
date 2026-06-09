@@ -1,98 +1,37 @@
-// Import config and registries (browser-safe)
+"use client";
+
+import type { Project as SharedProject } from "@light-render/shared";
 import { Config } from "./core/config";
 import type { BaseEffect } from "./effects/base";
 import type { BaseProperty } from "./properties/base";
 import { effectRegistry, propertyRegistry, type PluginClass } from "./utils/registry";
 
-/**
- * Options for registering custom plugins with LightRender.
- */
 export interface PluginRegistration {
-    /**
-     * The name to register the plugin under (e.g., "my-zoom", "custom-blur").
-     */
     name: string;
-    /**
-     * The plugin class to register (must extend BaseEffect or BaseProperty).
-     */
     plugin: PluginClass<BaseEffect> | PluginClass<BaseProperty>;
-    /**
-     * If true, allows overwriting a built-in plugin with the same name.
-     * @default false
-     */
     overwrite?: boolean;
 }
 
-/**
- * Configuration options for creating a LightRender instance.
- * All properties are optional with sensible defaults.
- */
 export interface LightRenderOptions {
-    /**
-     * Output video width in pixels.
-     * @default 1920
-     */
     width?: number;
-    /**
-     * Output video height in pixels.
-     * @default 1080
-     */
     height?: number;
-    /**
-     * Frames per second.
-     * @default 30
-     */
     fps?: number;
-    /**
-     * Video codec (e.g., "h264", "libx265").
-     * @default "h264"
-     */
     codec?: string;
-    /**
-     * Encoding quality preset.
-     * @default "high"
-     */
     quality?: string;
-    /**
-     * Custom effects to register (in addition to built-ins).
-     */
     effects?: PluginRegistration[];
-    /**
-     * Custom properties to register (in addition to built-ins).
-     */
     properties?: PluginRegistration[];
-    /**
-     * If true, clears all plugins before registering (built-ins + custom).
-     * Use with caution!
-     * @default false
-     */
     clearAll?: boolean;
 }
 
+// Define the shape of the returning auto-assigned interface
+export interface LightRenderInstance extends Config {
+    render: (project: SharedProject, outputPath: string) => Promise<void>;
+}
+
 /**
- * Creates a configured Config instance for LightRender.
- *
- * Built-in plugins are auto-registered via decorators on import.
- * Custom plugins can be added via the effects/properties options.
- *
- * For rendering, use:
- * - Browser: renderFrame() for canvas preview
- * - Node.js: new Engine(config) for FFmpeg rendering
- *
- * @example
- * // Browser preview
- * import { LightRender, renderFrame } from "@light-render/core";
- * const config = LightRender({ width: 1920, height: 1080 });
- * renderFrame(ctx, project, currentTime);
- *
- * // Node.js rendering
- * import { LightRender, Engine } from "@light-render/core";
- * const config = LightRender({ width: 1920, height: 1080 });
- * const engine = new Engine(config);
- * await engine.render(project, "output.mp4");
+ * Creates a configured LightRender instance with an auto-assigned execution engine.
  */
-export function LightRender(options: LightRenderOptions = {}): Config {
-    // Extract options with defaults
+export function LightRender(options: LightRenderOptions = {}): LightRenderInstance {
     const {
         width = 1920,
         height = 1080,
@@ -104,7 +43,6 @@ export function LightRender(options: LightRenderOptions = {}): Config {
         clearAll = false,
     } = options;
 
-    // Optional: Clear all existing plugins first
     if (clearAll) {
         effectRegistry.list().forEach((name) => {
             // @ts-expect-error: Private property access for controlled cleanup
@@ -116,50 +54,46 @@ export function LightRender(options: LightRenderOptions = {}): Config {
         });
     }
 
-    // Register custom effects (built-ins already registered via decorators)
     for (const { name, plugin, overwrite = false } of effects) {
         effectRegistry.registerClass(name, plugin as PluginClass<BaseEffect>, { overwrite });
     }
 
-    // Register custom properties
     for (const { name, plugin, overwrite = false } of properties) {
         propertyRegistry.registerClass(name, plugin as PluginClass<BaseProperty>, { overwrite });
     }
 
-    // Return Config instance (users can then create Engine manually if needed)
-    return new Config({
-        width,
-        height,
-        fps,
-        codec,
-        quality,
-    });
+    // Initialize core configuration base
+    const config = new Config({ width, height, fps, codec, quality });
+
+    // Auto-assign runtime engine behavior to avoid manual initialization downstream
+    const renderMethod = async (project: SharedProject, outputPath: string): Promise<void> => {
+        if (typeof window !== "undefined") {
+            throw new Error(
+                "Browser rendering via LightRender instance is not yet implemented. " +
+                    "For browser video previews, utilize 'renderFrame()' directly. " +
+                    "WebAssembly (WASM) compiler pipelines are slated for a future release.",
+            );
+        }
+
+        // Lazy load the Engine core dynamically to prevent breaking browser bundler environments
+        const { Engine } = await import("./core/engine");
+        const runtimeEngine = new Engine(config);
+        return await runtimeEngine.render(project, outputPath);
+    };
+
+    // Combine config properties and the auto-assigned engine runner method
+    return Object.assign(config, { render: renderMethod }) as LightRenderInstance;
 }
 
-/**
- * Utility to list all registered effects.
- */
 export function listEffects(): string[] {
     return effectRegistry.list();
 }
-
-/**
- * Utility to list all registered properties.
- */
 export function listProperties(): string[] {
     return propertyRegistry.list();
 }
-
-/**
- * Utility to get a registered effect class by name.
- */
 export function getEffect(name: string): PluginClass<BaseEffect> {
     return effectRegistry.get(name);
 }
-
-/**
- * Utility to get a registered property class by name.
- */
 export function getProperty(name: string): PluginClass<BaseProperty> {
     return propertyRegistry.get(name);
 }

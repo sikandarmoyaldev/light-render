@@ -1,12 +1,11 @@
 {
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "target": "ES2022",
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "outDir": "./dist"
+        "paths": {
+            "@light-render/core": ["../../packages/core/src/index.ts"],
+            "@light-render/core/node": ["../../packages/core/src/node.ts"],
+            "@light-render/shared": ["../../packages/shared/src/index.ts"]
+        }
     },
     "include": ["render.ts"]
 }

@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Import core engine and JSON loader from the workspace package
-import { LightRender, loadFromJson } from "@light-render/core";
+import { LightRender, loadFromJson } from "@light-render/core/node";
 
 // Resolve current directory for ESM
 const __filename = fileURLToPath(import.meta.url);
