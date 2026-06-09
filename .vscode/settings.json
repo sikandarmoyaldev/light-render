@@ -13,7 +13,8 @@
         "**/.DS_Store": true,
         "**/*.log": true,
         "pnpm-debug.log*": true,
-        "**/.git": true // Changed to true to completely hide the .git folder from the sidebar
+        "**/.git": true,
+        "**/.astro": true
     },
 
     // --- Search Engine Performance Optimization ---
@@ -22,7 +23,8 @@
         "**/.next": true,
         "**/dist": true,
         "**/pnpm-lock.yaml": true,
-        "**/.turbo": true
+        "**/.turbo": true,
+        "**/.astro": true
     },
 
     // --- File Nesting View Rules ---
