@@ -1,10 +1,18 @@
 // Import base classes to strictly type the global registries
+// These base classes now enforce the dual-mode contract (FFmpeg + Canvas)
 import { BaseEffect } from "../effects/base";
 import { BaseProperty } from "../properties/base";
 
 /**
  * Strict interface for plugin classes.
- * We only require the static factory method.
+ *
+ * In the Unified Architecture, every plugin must implement:
+ * 1. A static `fromDict` factory for JSON deserialization.
+ * 2. `buildFfmpegFilterString` (via BaseProperty/BaseEffect) for server-side rendering.
+ * 3. `applyToCanvasContext` or `calculateCanvasTransform` for browser live preview.
+ *
+ * The registry ensures type safety for the factory method, while the
+ * base class inheritance ensures the dual-mode rendering methods exist.
  */
 export type PluginClass<T> = {
     fromDict(data: Record<string, unknown>): T;
@@ -16,6 +24,7 @@ export type PluginClass<T> = {
 export interface RegisterOptions {
     /**
      * If true, allows overwriting an existing plugin with the same name.
+     * Use with caution to avoid breaking existing projects.
      * @default false
      */
     overwrite?: boolean;
@@ -23,7 +32,11 @@ export interface RegisterOptions {
 
 /**
  * Generic registry for plugins (effects, properties, etc.).
- * Mirrors the Python Registry decorator pattern with strict type safety.
+ *
+ * This registry is the central hub for the LightRender plugin system.
+ * It supports both decorator-based registration (for built-ins) and
+ * manual registration (for user plugins), ensuring a consistent
+ * single-source-of-truth for all visual logic.
  */
 export class Registry<T> {
     private name: string;
@@ -36,7 +49,16 @@ export class Registry<T> {
 
     /**
      * Decorator to register a plugin class.
-     * Returns void to tell TypeScript not to replace the original class type.
+     *
+     * @example
+     * ```ts
+     * @propertyRegistry.register("blur")
+     * export class BlurProperty extends BaseProperty { ... }
+     * ```
+     *
+     * @param name - The unique identifier for the plugin (e.g., "blur", "zoom")
+     * @param options - Registration options (e.g., overwrite protection)
+     * @returns A void decorator function
      */
     register(name: string, options: RegisterOptions = {}) {
         return (cls: PluginClass<T>): void => {
@@ -51,6 +73,13 @@ export class Registry<T> {
 
     /**
      * Manually register a plugin class (non-decorator usage).
+     *
+     * Useful for runtime registration or when decorators aren't supported.
+     *
+     * @example
+     * ```ts
+     * propertyRegistry.registerClass("my-blur", MyBlurProperty);
+     * ```
      */
     registerClass(name: string, cls: PluginClass<T>, options: RegisterOptions = {}): void {
         if (this._registry.has(name) && !options.overwrite) {
@@ -63,6 +92,8 @@ export class Registry<T> {
 
     /**
      * Get a registered plugin class by name.
+     *
+     * @throws Error if the plugin is not found
      */
     get(name: string): PluginClass<T> {
         const cls = this._registry.get(name);
@@ -76,19 +107,21 @@ export class Registry<T> {
 
     /**
      * List all registered plugin names.
+     * Useful for debugging or building UI plugin pickers.
      */
     list(): string[] {
         return Array.from(this._registry.keys());
     }
 
     /**
-     * Check if a plugin is registered.
+     * Check if a plugin is registered without throwing an error.
      */
     has(name: string): boolean {
         return this._registry.has(name);
     }
 }
 
-// Global singleton registries strictly typed to their base classes
+// Global singleton registries strictly typed to their base classes.
+// These instances are used throughout the codebase to register and retrieve plugins.
 export const effectRegistry = new Registry<BaseEffect>("Effect");
 export const propertyRegistry = new Registry<BaseProperty>("Property");

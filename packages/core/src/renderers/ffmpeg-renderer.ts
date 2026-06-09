@@ -32,16 +32,13 @@ export class FfmpegRenderer {
         this.config = config;
     }
 
+    /**
+     * Builds FFmpeg filter strings for all properties on a layer.
+     * Uses the unified `buildFfmpegFilterString()` method from BaseProperty.
+     */
     private getPropertyFilters(layer: Layer): string {
         return Object.values(layer.properties)
-            .map((p) =>
-                p.calculateValue(
-                    this.config.width,
-                    this.config.height,
-                    this.config.width,
-                    this.config.height,
-                ),
-            )
+            .map((p) => p.buildFfmpegFilterString())
             .filter((v) => typeof v === "string" && v.length > 0 && !v.startsWith("x="))
             .join(",");
     }
@@ -85,7 +82,6 @@ export class FfmpegRenderer {
 
             // ✅ FIX: Create a black base canvas (Acts like Remotion's AbsoluteFill)
             const baseLabel = `base_${segment.id}`;
-            // Note: FFmpeg's size parameter uses 'x' (1920x1080), not ':'
             filterParts.push(
                 `color=c=black:s=${this.config.width}x${this.config.height}:r=${this.config.fps}[${baseLabel}]`,
             );
@@ -96,7 +92,7 @@ export class FfmpegRenderer {
                 let currentLabel = `${currentIndex}:v`;
                 let effectCounter = 0;
 
-                // 1. Apply Properties (Blur, etc.)
+                // 1. Apply Properties (Blur, Scale, etc.) via unified method
                 const propFilters = this.getPropertyFilters(layer);
                 if (propFilters) {
                     const propLabel = `prop_${currentIndex}`;
@@ -104,10 +100,11 @@ export class FfmpegRenderer {
                     currentLabel = propLabel;
                 }
 
-                // 2. Apply Effects (Zoom) using dynamic labels
+                // 2. Apply Effects (Zoom) via unified method
                 layer.effects.forEach((effect) => {
                     const outLabel = `fx_${currentIndex}_${effectCounter++}`;
-                    const effectFilter = effect.buildFilterString(
+                    // ✅ UPDATED: Use new clear method name
+                    const effectFilter = effect.buildFfmpegFilterString(
                         currentLabel,
                         outLabel,
                         totalDuration,
@@ -117,16 +114,12 @@ export class FfmpegRenderer {
                     currentLabel = outLabel;
                 });
 
-                // 3. Calculate Position for Overlay (Defaults to center if no position property)
+                // 3. Calculate Position for Overlay (via unified method)
                 let overlayPos: string | number = "x=(W-w)/2:y=(H-h)/2";
                 const posProp = layer.properties["position"];
                 if (posProp) {
-                    overlayPos = posProp.calculateValue(
-                        this.config.width,
-                        this.config.height,
-                        this.config.width,
-                        this.config.height,
-                    );
+                    // ✅ UPDATED: Use new clear method name
+                    overlayPos = posProp.buildFfmpegFilterString();
                 }
 
                 // 4. Overlay onto the accumulated canvas
