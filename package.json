@@ -9,6 +9,7 @@
         "build": "pnpm -r run build",
         "format": "prettier --write .",
         "dev": "pnpm -r --parallel run dev",
+        "typecheck": "pnpm -r exec tsc --noEmit",
         "example:render": "pnpm --filter @light-render/example-cli run render",
         "example:preview": "pnpm --filter @light-render/example-preview run dev"
     },
