@@ -29,6 +29,20 @@ export default tseslint.config(
             "prettier/prettier": "error",
             "@typescript-eslint/no-explicit-any": "warn",
             "@typescript-eslint/explicit-function-return-type": "off",
+
+            // ✅ Allow underscore-prefixed variables to be unused
+            // This is the standard TypeScript convention for interface-required but implementation-unused parameters
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
+                    caughtErrorsIgnorePattern: "^_",
+                },
+            ],
+
+            // Disable base rule since we're using the TypeScript version
+            "no-unused-vars": "off",
         },
     },
 );
