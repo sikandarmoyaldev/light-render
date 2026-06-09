@@ -5,10 +5,10 @@
     "type": "module",
     "packageManager": "pnpm@10.32.1",
     "scripts": {
-        "build": "pnpm -r run build",
-        "dev": "pnpm -r --parallel run dev",
         "lint": "eslint .",
+        "build": "pnpm -r run build",
         "format": "prettier --write .",
+        "dev": "pnpm -r --parallel run dev",
         "example:render": "pnpm --filter @light-render/example-cli run render",
         "example:preview": "pnpm --filter @light-render/example-preview run dev"
     },

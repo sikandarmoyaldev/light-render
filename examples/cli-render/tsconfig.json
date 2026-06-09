@@ -1,11 +1,4 @@
 {
-    "extends": "../../tsconfig.base.json",
-    "compilerOptions": {
-        "paths": {
-            "@light-render/core": ["../../packages/core/src/index.ts"],
-            "@light-render/core/node": ["../../packages/core/src/node.ts"],
-            "@light-render/shared": ["../../packages/shared/src/index.ts"]
-        }
-    },
+    "extends": "../../tsconfig.base.node.json",
     "include": ["render.ts"]
 }
