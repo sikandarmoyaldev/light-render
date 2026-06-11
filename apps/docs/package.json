@@ -10,7 +10,7 @@
         "dev": "astro dev",
         "preview": "astro preview",
         "registry:build": "npx shadcn build",
-        "build": "astro check && npm run registry:build && astro build"
+        "build": "pnpm --filter @light-render/core --filter @light-render/player --filter @light-render/shared build && astro check && npm run registry:build && astro build"
     },
     "dependencies": {
         "@astrojs/check": "^0.9.9",
