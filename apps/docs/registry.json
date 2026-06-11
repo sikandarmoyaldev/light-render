@@ -7,13 +7,14 @@
             "name": "repeating-zoom",
             "type": "registry:component",
             "description": "Cinematic repeating zoom effect with 9K oversampling.",
+            "dependencies": ["@light-render/core"],
             "files": [
                 {
-                    "path": "src/registry/default/effects/repeating-zoom.ts",
-                    "type": "registry:component"
+                    "path": "src/registry/items/effects/repeating-zoom.ts",
+                    "type": "registry:component",
+                    "target": "@lib/light-render/effects/repeating-zoom.ts"
                 }
-            ],
-            "dependencies": ["@light-render/core"]
+            ]
         }
     ]
 }

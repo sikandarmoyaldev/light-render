@@ -3,7 +3,7 @@ title: Installation
 description: How to install light-render effects and properties in your project.
 ---
 
-import { Code } from "@astrojs/starlight/components";
+import CliCommandCode from "@/components/markdown/cli-command-code/cli-command-code.astro";
 import { PUBLIC_SITE_SHORT_TITLE, PUBLIC_SITE_URL } from "astro:env/client";
 
 It doesn't matter what framework or package manager you are using. Installing {PUBLIC_SITE_SHORT_TITLE} effects and properties is as simple as running the `shadcn add` command followed by the URL to the effect you want to install. This URL will always be formatted as <code>{PUBLIC_SITE_URL}/r/\<effect-name\>.json</code>.
@@ -12,4 +12,7 @@ The entire install process is handled by the `shadcn` CLI tool and works identic
 
 ## Example
 
-<Code code={`npx shadcn@latest add ${PUBLIC_SITE_URL}/r/fade-transition.json`} lang="bash" />
+<CliCommandCode
+    action="run"
+    command={`shadcn@latest add ${PUBLIC_SITE_URL}/r/password-input.json`}
+/>
