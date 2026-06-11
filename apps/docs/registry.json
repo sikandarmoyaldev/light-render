@@ -1,0 +1,19 @@
+{
+    "$schema": "https://ui.shadcn.com/schema/registry.json",
+    "name": "light-render-registry",
+    "homepage": "https://light-render.dev",
+    "items": [
+        {
+            "name": "repeating-zoom",
+            "type": "registry:component",
+            "description": "Cinematic repeating zoom effect with 9K oversampling.",
+            "files": [
+                {
+                    "path": "src/registry/default/effects/repeating-zoom.ts",
+                    "type": "registry:component"
+                }
+            ],
+            "dependencies": ["@light-render/core"]
+        }
+    ]
+}

@@ -1,0 +1,61 @@
+---
+title: Repeating Zoom
+description: Cinematic repeating zoom effect with 9K oversampling and sub-pixel smoothness.
+---
+
+import CodePreview from "@/components/markdown/code-preview/code-preview.astro";
+import Installation from "@/components/markdown/installation-tabs/installation-tabs.astro";
+import { Callout } from "@astrojs/starlight/components";
+
+<CodePreview demo="effects/repeating-zoom/basic" />
+
+## Installation
+
+<Installation registryItem="repeating-zoom" />
+
+## Usage
+
+```tsx
+import { RepeatingZoomEffect } from "@/lib/light-render/effects/repeating-zoom";
+```
+
+```tsx
+// 1. Initialize the effect
+const zoomEffect = new RepeatingZoomEffect({
+    strength: 1.15,
+    zoomInDuration: 3,
+    zoomOutDuration: 3,
+    pauseDuration: 3,
+    easing: "ease-in-out",
+});
+
+// 2. Add it to your project's layer configuration
+const project = {
+    composition: { width: 1920, height: 1080, fps: 30 },
+    segments: [
+        {
+            id: 1,
+            durationSeconds: 10,
+            layers: [
+                {
+                    id: "foreground",
+                    media: { type: "image", src: "/image.jpg" },
+                    effects: [zoomEffect.toDict()],
+                },
+            ],
+        },
+    ],
+};
+```
+
+## API Reference
+
+The RepeatingZoomEffect class creates a cinematic zoom animation that alternates between zooming in and out with configurable durations and easing.
+
+| Prop            | Type                                                   | Default         |
+| --------------- | ------------------------------------------------------ | --------------- |
+| strength        | `number`                                               | `1.15`          |
+| zoomInDuration  | `number`                                               | `3`             |
+| zoomOutDuration | `number`                                               | `3`             |
+| pauseDuration   | `number`                                               | `0`             |
+| easing          | `"linear" \| "ease-in" \| "ease-out" \| "ease-in-out"` | `"ease-in-out"` |

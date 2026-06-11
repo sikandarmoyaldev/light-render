@@ -51,10 +51,10 @@ export default defineConfig({
                         { label: "Installation", slug: "getting-started/installation" },
                     ],
                 },
-                // {
-                //     label: "Effects Registry",
-                //     autogenerate: { directory: "effects" },
-                // },
+                {
+                    label: "Effects",
+                    items: [{ autogenerate: { directory: "effects" } }],
+                },
                 // {
                 //     label: "Properties",
                 //     autogenerate: { directory: "properties" },
