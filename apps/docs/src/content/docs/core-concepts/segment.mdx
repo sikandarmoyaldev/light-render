@@ -1,0 +1,72 @@
+---
+title: Segment
+description: Represents a distinct timeline unit containing layers, duration, and optional audio tracks.
+---
+
+A **Segment** is a fundamental building block of a LightRender project. It represents a specific time range on the timeline where one or more visual layers are composited together.
+
+Think of segments as "scenes" in your video. Each segment has its own duration and can contain multiple overlapping layers (images, videos, text) that play simultaneously.
+
+## Basic Usage
+
+Segments are typically created automatically when you pass a project JSON to the Engine, but you can also instantiate them manually using `fromDict()`.
+
+```tsx
+import { Segment } from "@light-render/core";
+
+// Create a segment from raw data
+const segment = Segment.fromDict({
+    id: "intro-scene",
+    duration: 5, // 5 seconds
+    audio: "/assets/background-music.mp3",
+    layers: [
+        {
+            id: "bg-layer",
+            type: "image",
+            src: "/assets/sunset.jpg",
+            effects: [],
+            properties: {},
+        },
+    ],
+});
+
+console.log(segment.duration); // 5
+console.log(segment.layers.length); // 1
+```
+
+## Structure
+
+### Properties
+
+| Property   | Type               | Description                                      |
+| ---------- | ------------------ | ------------------------------------------------ |
+| `id`       | `string \| number` | Unique identifier for this segment               |
+| `duration` | `number`           | Length of the segment in seconds                 |
+| `audio`    | `string?`          | Optional path to an audio track for this segment |
+| `layers`   | `Layer[]`          | Array of visual layers rendered in this segment  |
+
+## Layer Composition
+
+Layers within a segment are rendered in array order. The first layer is at the bottom (background), and subsequent layers stack on top. This allows for complex compositing like foreground overlays, text captions, and effect masks.
+
+## Validation Pipeline
+
+When using `Segment.fromDict()`, the following validation occurs automatically:
+
+1. **Schema Check**: Raw data is validated against the shared Zod schema (`@light-render/shared`)
+2. **Type Safety**: Ensures all required fields are present and correctly typed
+3. **Layer Instantiation**: Each layer object is recursively converted into a `Layer` instance with its effects and properties resolved via the registry
+
+This means malformed segment data will throw descriptive errors before rendering begins, preventing wasted compute time.
+
+## API Reference
+
+`Segment.fromDict(data: unknown): Segment`
+
+Factory method that validates raw data and returns a fully instantiated Segment.
+
+| Parameter | Type      | Description                      |
+| --------- | --------- | -------------------------------- |
+| `data`    | `unknown` | Raw segment configuration object |
+
+> ⚠️ **Note**: Always use `fromDict()` instead of the constructor directly when working with external/project JSON data. The constructor assumes pre-validated input.

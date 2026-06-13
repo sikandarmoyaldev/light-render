@@ -54,7 +54,10 @@ export default defineConfig({
                 },
                 {
                     label: "Core Concepts",
-                    items: [{ label: "Engine", slug: "core-concepts/engine" }],
+                    items: [
+                        { label: "Engine", slug: "core-concepts/engine" },
+                        { label: "Segment", slug: "core-concepts/segment" },
+                    ],
                 },
                 {
                     label: "Effects",
