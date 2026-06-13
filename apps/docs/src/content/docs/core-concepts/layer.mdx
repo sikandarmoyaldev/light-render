@@ -1,0 +1,75 @@
+---
+title: Layer
+description: Represents a single visual element within a segment with attached effects and properties.
+---
+
+A **Layer** is the atomic visual unit in LightRender. It represents a single image, video, or text element positioned within a segment's timeline.
+
+Layers are compositing primitives: they hold source media, spatial transforms, color adjustments, and animation effects that define how content appears on screen.
+
+## Basic Usage
+
+Layers are always instantiated via `fromDict()` when processing project JSON. Manual construction bypasses plugin registry resolution.
+
+```tsx
+import { Layer } from "@light-render/core";
+
+// Validates data & resolves effects/properties via registry
+const layer = Layer.fromDict({
+    id: "foreground-text",
+    type: "image",
+    src: "/assets/logo.png",
+    properties: {
+        opacity: { type: "opacity", value: 0.8 },
+    },
+    effects: [{ type: "repeating-zoom", strength: 1.15 }],
+});
+
+console.log(layer.type); // "image"
+console.log(layer.effects.length); // 1
+```
+
+## Structure
+
+### Properties
+
+| Property     | Type                           | Description                                |
+| ------------ | ------------------------------ | ------------------------------------------ |
+| `id`         | `string`                       | Unique identifier for this layer           |
+| `src`        | `string`                       | Path to the media asset                    |
+| `type`       | `LayerType`                    | Media type: `"image" \| "video" \| "text"` |
+| `properties` | `Record<string, BaseProperty>` | Keyed map of active property instances     |
+| `effects`    | `BaseEffect[]`                 | Ordered array of applied effect instances  |
+
+## Plugin Instantiation
+
+`Layer.fromDict()` is the only entry point that fully initializes a layer. It performs four critical steps:
+
+1. Validates raw data against the shared Zod schema
+2. Creates the base `Layer` instance with typed primitives
+3. Resolves each property through `propertyRegistry.get()` and calls `PropClass.fromDict()`
+4. Resolves each effect through `effectRegistry.get()` and calls `EffectClass.fromDict()`
+
+Using the constructor directly produces a layer with empty `properties` and `effects` arrays regardless of input data.
+
+## Validation Pipeline
+
+The validation chain catches errors at three levels:
+
+- **Schema Level**: Missing required fields (`id`, `src`, `type`) throw immediately
+- **Registry Level**: Unregistered effect/property types throw with the unknown type name
+- **Plugin Level**: Individual `fromDict()` calls validate their own parameter constraints
+
+This multi-stage validation ensures no invalid layer reaches the renderer.
+
+## API Reference
+
+`Layer.fromDict(data: unknown): Layer`
+
+Factory method that validates raw data, resolves plugins, and returns a fully instantiated Layer.
+
+| Parameter | Type      | Description                    |
+| --------- | --------- | ------------------------------ |
+| `data`    | `unknown` | Raw layer configuration object |
+
+> **⚠️ Note**: Never use the constructor directly with external data. The constructor does not resolve effects or properties through the registry, producing non-functional layers even with valid input.

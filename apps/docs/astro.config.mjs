@@ -57,6 +57,7 @@ export default defineConfig({
                     items: [
                         { label: "Engine", slug: "core-concepts/engine" },
                         { label: "Segment", slug: "core-concepts/segment" },
+                        { label: "Layer", slug: "core-concepts/layer" },
                     ],
                 },
                 {
