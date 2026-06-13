@@ -1,12 +1,12 @@
 import type { BaseEffect } from "../effects/base";
+import type { BaseElement } from "../elements/base";
 import type { BaseProperty } from "../properties/base";
 import type { PreviewProject, RawLayer, RawSegment } from "../types";
-import { loadImage } from "../utils/image-cache";
-import { effectRegistry, propertyRegistry } from "../utils/registry";
+import { effectRegistry, elementRegistry, propertyRegistry } from "../utils/registry";
 
 interface ParsedLayer {
     id: string | number;
-    src: string;
+    element: BaseElement; // ✅ Replaced src with element
     properties: Record<string, BaseProperty>;
     effects: BaseEffect[];
 }
@@ -35,9 +35,14 @@ const parseLayer = (layer: RawLayer): ParsedLayer => {
         }
     }
 
+    // ✅ FIX: Use double-cast through 'unknown' to satisfy TypeScript
+    const elementType = layer.media.type;
+    const ElementClass = elementRegistry.get(elementType);
+    const element = ElementClass.fromDict(layer as unknown as Record<string, unknown>);
+
     return {
         id: layer.id,
-        src: layer.media.src,
+        element,
         properties,
         effects,
     };
@@ -56,51 +61,36 @@ const renderLayer = async (
     segmentDuration: number,
 ): Promise<void> => {
     try {
-        const img = await loadImage(parsedLayer.src);
-
-        // ✅ STEP 1: Calculate cover dimensions FIRST (before any transforms)
-        const imgAspectRatio = img.width / img.height;
-        const canvasAspectRatio = canvasWidth / canvasHeight;
-
-        let drawWidth: number;
-        let drawHeight: number;
-
-        if (imgAspectRatio > canvasAspectRatio) {
-            drawWidth = canvasWidth;
-            drawHeight = canvasWidth / imgAspectRatio;
-        } else {
-            drawHeight = canvasHeight;
-            drawWidth = canvasHeight * imgAspectRatio;
-        }
-
         ctx.save();
 
-        // ✅ STEP 2: Move origin to center of canvas
+        // ✅ STEP 1: Move origin to center of canvas
         ctx.translate(canvasWidth / 2, canvasHeight / 2);
 
-        // ✅ STEP 3: Apply ALL properties via unified method
+        // ✅ STEP 2: Apply ALL properties via unified method
         for (const property of Object.values(parsedLayer.properties)) {
-            // ✅ UPDATED: Use new clear method name
-            property.applyToCanvasContext(ctx, canvasWidth, canvasHeight, img.width, img.height);
+            property.applyToCanvasContext(ctx, canvasWidth, canvasHeight, 0, 0);
         }
 
-        // ✅ STEP 4: Apply ALL effects via unified method
+        // ✅ STEP 3: Apply ALL effects via unified method
         for (const effect of parsedLayer.effects) {
-            // ✅ UPDATED: Use new clear method name
             const transform = effect.calculateCanvasTransform(timeInSegment, segmentDuration);
 
             if (transform.scale !== 1) {
                 ctx.scale(transform.scale, transform.scale);
-                drawWidth *= transform.scale;
-                drawHeight *= transform.scale;
             }
             if (transform.offsetX !== 0 || transform.offsetY !== 0) {
                 ctx.translate(transform.offsetX, transform.offsetY);
             }
         }
 
-        // ✅ STEP 5: Draw image centered at origin with calculated dimensions
-        ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+        // ✅ STEP 4: Delegate drawing to the element
+        await parsedLayer.element.drawOnCanvas(
+            ctx,
+            canvasWidth,
+            canvasHeight,
+            timeInSegment,
+            segmentDuration,
+        );
 
         ctx.restore();
     } catch (error) {

@@ -8,11 +8,13 @@ export type { CompositionConfig, PreviewProject, RawLayer, RawSegment } from "./
 
 // --- Base Classes ---
 export { BaseEffect, type CanvasTransform } from "./effects/base";
+export { BaseElement } from "./elements/base";
 export { BaseProperty } from "./properties/base";
 
 // --- Registry ---
 export {
     effectRegistry,
+    elementRegistry,
     propertyRegistry,
     type PluginClass,
     type RegisterOptions,
@@ -23,6 +25,7 @@ export { renderFrame } from "./renderers/canvas-renderer";
 
 // --- Unified Properties & Effects ---
 export { RepeatingZoomEffect, type RepeatingZoomParams } from "./effects/repeating-zoom";
+export { ImageElement } from "./elements/image";
 export { BlurProperty } from "./properties/blur";
 export { PositionProperty } from "./properties/position";
 export { ScaleProperty } from "./properties/scale";

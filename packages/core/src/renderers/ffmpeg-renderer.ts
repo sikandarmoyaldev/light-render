@@ -9,7 +9,8 @@ import path from "node:path";
 import { Config } from "../core/config";
 import { Layer } from "../core/layer";
 import { Segment } from "../core/segment";
-import type { Renderer } from "../types/render"; // ✅ Import interface
+import type { FfmpegInputConfig } from "../elements/base";
+import type { Renderer } from "../types/render";
 
 async function downloadAsset(url: string, tempDir: string): Promise<string> {
     const hash = createHash("sha256").update(url).digest("hex").slice(0, 16);
@@ -31,7 +32,7 @@ async function downloadAsset(url: string, tempDir: string): Promise<string> {
  * Implements the Renderer interface for backend-agnostic orchestration.
  */
 export class FfmpegRenderer implements Renderer {
-    public config: Config; // ✅ Make public for potential config updates
+    public config: Config;
 
     constructor(config: Config) {
         this.config = config;
@@ -42,7 +43,6 @@ export class FfmpegRenderer implements Renderer {
      */
     async isAvailable(): Promise<boolean> {
         try {
-            // ✅ FIX: Use dynamic import() instead of require() to satisfy ESLint
             const { execSync } = await import("child_process");
             execSync("ffmpeg -version", { stdio: "ignore" });
             return true;
@@ -64,10 +64,14 @@ export class FfmpegRenderer implements Renderer {
         const assetsDir = path.join(process.cwd(), "temp", "assets");
         if (!existsSync(assetsDir)) await mkdir(assetsDir, { recursive: true });
 
+        // ✅ Download remote assets for image/video elements
         for (const segment of segments) {
             for (const layer of segment.layers) {
-                if (layer.src.startsWith("http://") || layer.src.startsWith("https://")) {
-                    layer.src = await downloadAsset(layer.src, assetsDir);
+                if (layer.element.type === "image" || layer.element.type === "video") {
+                    const src = (layer.element as any).src;
+                    if (src && (src.startsWith("http://") || src.startsWith("https://"))) {
+                        (layer.element as any).src = await downloadAsset(src, assetsDir);
+                    }
                 }
             }
         }
@@ -80,18 +84,28 @@ export class FfmpegRenderer implements Renderer {
         for (const segment of segments) {
             const totalDuration = segment.duration;
 
-            segment.layers.forEach((layer) => {
-                if (layer.type === "image") {
-                    args.push(
-                        "-loop",
-                        "1",
-                        "-framerate",
-                        this.config.fps.toString(),
-                        "-i",
-                        layer.src,
-                    );
-                } else {
-                    args.push("-i", layer.src);
+            // ✅ Collect input configs from all elements in this segment
+            const layerConfigs: FfmpegInputConfig[] = segment.layers.map((layer, index) =>
+                layer.element.getFfmpegInputConfig(
+                    this.config.fps,
+                    inputIndex + index,
+                    this.config.width,
+                    this.config.height,
+                    totalDuration,
+                ),
+            );
+
+            // ✅ Add input arguments (only for elements with input files)
+            layerConfigs.forEach((config) => {
+                if (config.inputArgs.length > 0) {
+                    args.push(...config.inputArgs);
+                }
+            });
+
+            // ✅ Add initial filters (for text elements that generate their own streams)
+            layerConfigs.forEach((config) => {
+                if (config.initialFilters.length > 0) {
+                    filterParts.push(...config.initialFilters);
                 }
             });
 
@@ -101,20 +115,21 @@ export class FfmpegRenderer implements Renderer {
             );
             let lastVideoLabel = baseLabel;
 
+            // ✅ Process each layer using its element's output label
             segment.layers.forEach((layer, layerIndex) => {
-                const currentIndex = inputIndex + layerIndex;
-                let currentLabel = `${currentIndex}:v`;
+                const config = layerConfigs[layerIndex];
+                let currentLabel = config.outputStreamLabel; // ✅ Use element's label
                 let effectCounter = 0;
 
                 const propFilters = this.getPropertyFilters(layer);
                 if (propFilters) {
-                    const propLabel = `prop_${currentIndex}`;
+                    const propLabel = `prop_${inputIndex + layerIndex}`;
                     filterParts.push(`[${currentLabel}]${propFilters}[${propLabel}]`);
                     currentLabel = propLabel;
                 }
 
                 layer.effects.forEach((effect) => {
-                    const outLabel = `fx_${currentIndex}_${effectCounter++}`;
+                    const outLabel = `fx_${inputIndex + layerIndex}_${effectCounter++}`;
                     const effectFilter = effect.buildFfmpegFilterString(
                         currentLabel,
                         outLabel,

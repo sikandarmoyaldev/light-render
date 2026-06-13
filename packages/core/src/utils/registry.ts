@@ -1,6 +1,7 @@
 // Import base classes to strictly type the global registries
 // These base classes now enforce the dual-mode contract (FFmpeg + Canvas)
 import { BaseEffect } from "../effects/base";
+import { BaseElement } from "../elements/base";
 import { BaseProperty } from "../properties/base";
 
 /**
@@ -124,4 +125,5 @@ export class Registry<T> {
 // Global singleton registries strictly typed to their base classes.
 // These instances are used throughout the codebase to register and retrieve plugins.
 export const effectRegistry = new Registry<BaseEffect>("Effect");
+export const elementRegistry = new Registry<BaseElement>("Element");
 export const propertyRegistry = new Registry<BaseProperty>("Property");
