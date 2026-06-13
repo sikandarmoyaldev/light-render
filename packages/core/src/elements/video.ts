@@ -1,5 +1,5 @@
 import { elementRegistry } from "../utils/registry";
-import { BaseElement } from "./base";
+import { BaseElement, type FfmpegInputConfig } from "./base";
 
 @elementRegistry.register("video")
 export class VideoElement extends BaseElement {
@@ -11,10 +11,11 @@ export class VideoElement extends BaseElement {
         this.src = src;
     }
 
-    getFfmpegInputConfig(fps: number, inputIndex: number) {
+    // ✅ Now async with explicit return type
+    async getFfmpegInputConfig(fps: number, inputIndex: number): Promise<FfmpegInputConfig> {
         return {
             inputArgs: ["-i", this.src],
-            initialFilters: [],
+            initialFilters: [] as string[],
             outputStreamLabel: `${inputIndex}:v`,
         };
     }
@@ -40,7 +41,6 @@ export class VideoElement extends BaseElement {
                 video.onseeked = resolve;
             });
 
-            // Calculate "cover" dimensions
             const vidAspectRatio = video.videoWidth / video.videoHeight;
             const canvasAspectRatio = canvasWidth / canvasHeight;
             let drawWidth: number, drawHeight: number;
@@ -60,6 +60,7 @@ export class VideoElement extends BaseElement {
     toDict() {
         return { type: "video", src: this.src };
     }
+
     static fromDict(data: Record<string, unknown>) {
         return new VideoElement(data.src as string);
     }

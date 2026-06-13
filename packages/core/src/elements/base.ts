@@ -1,7 +1,7 @@
 export interface FfmpegInputConfig {
-    inputArgs: string[]; // FFmpeg CLI arguments (e.g., ["-i", "file.mp4"])
-    initialFilters: string[]; // Filters to generate stream if no input file (e.g., for text)
-    outputStreamLabel: string; // The FFmpeg stream label (e.g., "0:v" or "text_0")
+    inputArgs: string[];
+    initialFilters: string[];
+    outputStreamLabel: string;
 }
 
 export abstract class BaseElement {
@@ -9,6 +9,7 @@ export abstract class BaseElement {
 
     /**
      * FFmpeg: Generates input arguments and initial filters for this element.
+     * Async to support dynamic imports for Node.js-only modules (e.g., font detection).
      */
     abstract getFfmpegInputConfig(
         fps: number,
@@ -16,11 +17,10 @@ export abstract class BaseElement {
         width: number,
         height: number,
         duration: number,
-    ): FfmpegInputConfig;
+    ): Promise<FfmpegInputConfig>;
 
     /**
      * Canvas: Draws the element onto the canvas context.
-     * Context is already translated to the center (0,0).
      */
     abstract drawOnCanvas(
         ctx: CanvasRenderingContext2D,

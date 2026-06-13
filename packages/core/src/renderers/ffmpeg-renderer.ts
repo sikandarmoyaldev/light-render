@@ -84,14 +84,30 @@ export class FfmpegRenderer implements Renderer {
         for (const segment of segments) {
             const totalDuration = segment.duration;
 
-            // ✅ Collect input configs from all elements in this segment
-            const layerConfigs: FfmpegInputConfig[] = segment.layers.map((layer, index) =>
-                layer.element.getFfmpegInputConfig(
-                    this.config.fps,
-                    inputIndex + index,
-                    this.config.width,
-                    this.config.height,
-                    totalDuration,
+            // ✅ Calculate correct input indices for each layer
+            // Only image/video layers consume input file indices
+            const layerInputIndices: number[] = [];
+            let currentInputIndex = inputIndex;
+
+            for (const layer of segment.layers) {
+                if (layer.element.type === "image" || layer.element.type === "video") {
+                    layerInputIndices.push(currentInputIndex);
+                    currentInputIndex++;
+                } else {
+                    layerInputIndices.push(-1); // Text elements don't use input indices
+                }
+            }
+
+            // ✅ Collect input configs from all elements in this segment (now async)
+            const layerConfigs: FfmpegInputConfig[] = await Promise.all(
+                segment.layers.map((layer, index) =>
+                    layer.element.getFfmpegInputConfig(
+                        this.config.fps,
+                        layerInputIndices[index], // ✅ Use correct input index
+                        this.config.width,
+                        this.config.height,
+                        totalDuration,
+                    ),
                 ),
             );
 
@@ -123,13 +139,13 @@ export class FfmpegRenderer implements Renderer {
 
                 const propFilters = this.getPropertyFilters(layer);
                 if (propFilters) {
-                    const propLabel = `prop_${inputIndex + layerIndex}`;
+                    const propLabel = `prop_${layerInputIndices[layerIndex] !== -1 ? layerInputIndices[layerIndex] : layerIndex}`;
                     filterParts.push(`[${currentLabel}]${propFilters}[${propLabel}]`);
                     currentLabel = propLabel;
                 }
 
                 layer.effects.forEach((effect) => {
-                    const outLabel = `fx_${inputIndex + layerIndex}_${effectCounter++}`;
+                    const outLabel = `fx_${layerInputIndices[layerIndex] !== -1 ? layerInputIndices[layerIndex] : layerIndex}_${effectCounter++}`;
                     const effectFilter = effect.buildFfmpegFilterString(
                         currentLabel,
                         outLabel,
@@ -158,7 +174,12 @@ export class FfmpegRenderer implements Renderer {
                 `[${lastVideoLabel}]trim=duration=${totalDuration},setpts=PTS-STARTPTS[${segOutLabel}]`,
             );
             segmentOutputs.push(segOutLabel);
-            inputIndex += segment.layers.length;
+
+            // ✅ FIX: Only increment inputIndex for layers that actually consume input files
+            const layersWithInputs = segment.layers.filter(
+                (layer) => layer.element.type === "image" || layer.element.type === "video",
+            );
+            inputIndex += layersWithInputs.length;
         }
 
         if (segmentOutputs.length > 1) {

@@ -14,13 +14,11 @@ export const ConfigSchema = z.object({
 
 /**
  * Shared property schema (dynamic key-value pairs).
- * Uses `unknown` to maintain strict type safety without `any`.
  */
 export const PropertySchema = z.record(z.string(), z.unknown());
 
 /**
  * Shared effect schema (dynamic, type-driven).
- * Uses intersection to guarantee `type` exists while allowing unknown extra properties.
  */
 export const EffectSchema = z.intersection(
     z.object({ type: z.string() }),
@@ -28,15 +26,49 @@ export const EffectSchema = z.intersection(
 );
 
 /**
- * Shared layer schema for visual elements.
+ * Base layer schema with common fields.
  */
-export const LayerSchema = z.object({
+const BaseLayerSchema = z.object({
     id: z.string(),
-    src: z.string(),
-    type: z.enum(["image", "video", "text", "color"]).default("image"),
     properties: z.record(z.string(), z.unknown()).optional().default({}),
     effects: z.array(EffectSchema).optional().default([]),
 });
+
+/**
+ * Media layer schema (image/video) - requires src.
+ */
+const MediaLayerSchema = BaseLayerSchema.extend({
+    type: z.enum(["image", "video"]),
+    src: z.string(),
+});
+
+/**
+ * Text layer schema - requires content, no src needed.
+ */
+const TextLayerSchema = BaseLayerSchema.extend({
+    type: z.literal("text"),
+    content: z.string(),
+    fontSize: z.number().optional().default(48),
+    color: z.string().optional().default("#ffffff"),
+});
+
+/**
+ * Color layer schema - requires color value.
+ */
+const ColorLayerSchema = BaseLayerSchema.extend({
+    type: z.literal("color"),
+    color: z.string(),
+});
+
+/**
+ * Discriminated union for all layer types.
+ * Each type has its own required fields.
+ */
+export const LayerSchema = z.discriminatedUnion("type", [
+    MediaLayerSchema,
+    TextLayerSchema,
+    ColorLayerSchema,
+]);
 
 /**
  * Shared segment schema representing a timeline chunk.

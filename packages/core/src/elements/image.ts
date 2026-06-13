@@ -1,6 +1,6 @@
 import { loadImage } from "../utils/image-cache";
 import { elementRegistry } from "../utils/registry";
-import { BaseElement } from "./base";
+import { BaseElement, type FfmpegInputConfig } from "./base";
 
 @elementRegistry.register("image")
 export class ImageElement extends BaseElement {
@@ -12,10 +12,11 @@ export class ImageElement extends BaseElement {
         this.src = src;
     }
 
-    getFfmpegInputConfig(fps: number, inputIndex: number) {
+    // ✅ Now async with explicit return type
+    async getFfmpegInputConfig(fps: number, inputIndex: number): Promise<FfmpegInputConfig> {
         return {
             inputArgs: ["-loop", "1", "-framerate", fps.toString(), "-i", this.src],
-            initialFilters: [],
+            initialFilters: [] as string[],
             outputStreamLabel: `${inputIndex}:v`,
         };
     }
@@ -23,7 +24,6 @@ export class ImageElement extends BaseElement {
     async drawOnCanvas(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number) {
         const img = await loadImage(this.src);
 
-        // Calculate "cover" dimensions
         const imgAspectRatio = img.width / img.height;
         const canvasAspectRatio = canvasWidth / canvasHeight;
         let drawWidth: number, drawHeight: number;

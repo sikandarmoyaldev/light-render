@@ -1,26 +1,16 @@
-// Import schemas, types, and constants for validation
-import { VALID_LAYER_TYPES } from "./constants";
+// Import schemas and types for validation
 import { EffectSchema, LayerSchema, ProjectSchema, PropertySchema, SegmentSchema } from "./schemas";
 import type { Effect, Layer, Project, Segment } from "./types";
 
 /**
  * Validates and cleans raw layer data.
- * Ensures all required fields exist and applies safe fallbacks.
  */
 export function validateLayer(data: unknown): Layer {
     const parsed = LayerSchema.safeParse(data);
     if (!parsed.success) {
         throw new Error(`Invalid layer data: ${parsed.error.message}`);
     }
-
-    const layer = parsed.data;
-
-    // Enforce valid layer type with a safe fallback
-    if (!VALID_LAYER_TYPES.includes(layer.type)) {
-        layer.type = "image";
-    }
-
-    return layer;
+    return parsed.data;
 }
 
 /**
@@ -47,7 +37,6 @@ export function validateProject(data: unknown): Project {
 
 /**
  * Validates and cleans raw effect data.
- * Ensures the effect has a valid type string and allows unknown extra properties.
  */
 export function validateEffect(data: unknown): Effect {
     const parsed = EffectSchema.safeParse(data);
@@ -59,7 +48,6 @@ export function validateEffect(data: unknown): Effect {
 
 /**
  * Validates and cleans raw property data.
- * Ensures the property is a valid key-value record.
  */
 export function validateProperty(data: unknown): Record<string, unknown> {
     const parsed = PropertySchema.safeParse(data);

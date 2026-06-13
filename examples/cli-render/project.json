@@ -35,6 +35,14 @@
                             "easing": "ease-in-out"
                         }
                     ]
+                },
+                {
+                    "id": "title-text",
+                    "type": "text",
+                    "content": "LightRender Engine",
+                    "fontSize": 96,
+                    "properties": {},
+                    "effects": []
                 }
             ]
         },
@@ -43,19 +51,20 @@
             "duration": 5.0,
             "layers": [
                 {
-                    "id": "background",
-                    "src": "https://picsum.photos/id/29/1080/1920",
-                    "type": "image",
+                    "id": "video-background",
+                    "src": "https://www.w3schools.com/html/mov_bbb.mp4",
+                    "type": "video",
                     "properties": {
-                        "scale": { "type": "scale", "value": 3 },
-                        "blur": { "type": "blur", "radius": 25 }
+                        "scale": { "type": "scale", "value": 2 }
                     },
                     "effects": []
                 },
                 {
-                    "id": "foreground",
-                    "src": "https://picsum.photos/id/29/1080/1920",
-                    "type": "image",
+                    "id": "subtitle",
+                    "type": "text",
+                    "content": "Video Segment",
+                    "fontSize": 72,
+                    "properties": {},
                     "effects": []
                 }
             ]
@@ -82,6 +91,23 @@
                         "scale": { "type": "scale", "value": 1.5 }
                     },
                     "effects": []
+                },
+                {
+                    "id": "final-text",
+                    "type": "text",
+                    "content": "Built with LightRender",
+                    "fontSize": 64,
+                    "properties": {},
+                    "effects": [
+                        {
+                            "type": "repeating-zoom",
+                            "strength": 1.1,
+                            "zoomInDuration": 2,
+                            "zoomOutDuration": 2,
+                            "pauseDuration": 1,
+                            "easing": "ease-in-out"
+                        }
+                    ]
                 }
             ]
         }

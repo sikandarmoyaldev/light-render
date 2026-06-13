@@ -26,6 +26,8 @@ export { renderFrame } from "./renderers/canvas-renderer";
 // --- Unified Properties & Effects ---
 export { RepeatingZoomEffect, type RepeatingZoomParams } from "./effects/repeating-zoom";
 export { ImageElement } from "./elements/image";
+export { TextElement } from "./elements/text";
+export { VideoElement } from "./elements/video";
 export { BlurProperty } from "./properties/blur";
 export { PositionProperty } from "./properties/position";
 export { ScaleProperty } from "./properties/scale";
