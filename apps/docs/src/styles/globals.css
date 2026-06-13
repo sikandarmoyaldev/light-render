@@ -200,6 +200,17 @@
     .sl-link-card a {
         @apply no-underline!;
     }
+
+    /* Force numbered lists to display correctly in Starlight content */
+    .sl-markdown-content ol:not(:where(.not-content *)) {
+        list-style-type: decimal !important;
+        padding-left: 1.5rem !important;
+    }
+
+    .sl-markdown-content ol li::marker {
+        color: var(--foreground) !important;
+        font-weight: 500;
+    }
 }
 
 @layer utilities {

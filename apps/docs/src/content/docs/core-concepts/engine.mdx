@@ -7,9 +7,9 @@ The **Engine** is the central orchestrator of LightRender. It acts as the bridge
 
 Its primary responsibilities are:
 
-- **Environment Detection:** Automatically selects the correct renderer (Node.js FFmpeg vs. Browser Canvas).
-- **Validation:** Enforces strict type safety using shared Zod schemas before any processing begins.
-- **Orchestration:** Converts raw data into executable Segment instances and manages the render lifecycle.
+1. **Environment Detection:** Automatically selects the correct renderer (Node.js FFmpeg vs. Browser Canvas).
+2. **Validation:** Enforces strict type safety using shared Zod schemas before any processing begins.
+3. **Orchestration:** Converts raw data into executable Segment instances and manages the render lifecycle.
 
 ## Basic Usage
 
@@ -64,7 +64,7 @@ If a project includes its own config, the Engine automatically updates its inter
 
 ## API Reference
 
-### new Engine(config: Config)
+`new Engine(config: Config)`
 
 Creates a new rendering engine instance.
 
@@ -72,7 +72,7 @@ Creates a new rendering engine instance.
 | --------- | -------- | ------------------------------------ |
 | `config`  | `Config` | Global render configuration defaults |
 
-### engine.render(project, outputPath)
+`engine.render(project, outputPath)`
 
 Executes the full render pipeline.
 
