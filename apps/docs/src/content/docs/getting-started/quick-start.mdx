@@ -1,0 +1,95 @@
+---
+title: Quick Start
+description: Get up and running with LightRender in under 5 minutes.
+---
+
+import { PUBLIC_SITE_SHORT_TITLE } from "astro:env/client";
+
+import CliCommandCode from "@/components/markdown/cli-command-code/cli-command-code.astro";
+import CodePreview from "@/components/markdown/code-preview/code-preview.astro";
+import { HelloWorldPreview } from "@/registry/examples/quick-start/hello-world";
+
+This guide will walk you through creating your first video using {PUBLIC_SITE_SHORT_TITLE}. By the end, you'll have rendered a simple video to your local machine.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (v18 or higher)
+- **FFmpeg** (must be available in your system PATH)
+
+## 1. Install the Core Package
+
+Install the `@light-render/core` package using your preferred package manager:
+
+<CliCommandCode action="install" command="@light-render/core" />
+
+## 2. Create Your First Project
+
+Create a new file named `render.ts` in your project root and add the following code:
+
+```tsx
+import { LightRender } from "@light-render/core";
+
+// 1. Initialize the LightRender instance
+const renderer = LightRender();
+
+// 2. Define your project structure
+const project = {
+    composition: { width: 1920, height: 1080, fps: 30 },
+    segments: [
+        {
+            id: 1,
+            durationSeconds: 5,
+            layers: [
+                {
+                    id: "hello-text",
+                    type: "text",
+                    content: "Hello, World!",
+                },
+            ],
+        },
+    ],
+};
+
+// 3. Render the video
+async function main() {
+    console.log("Starting render...");
+    await renderer.render(project, "output.mp4");
+    console.log("Render complete! Check output.mp4");
+}
+
+main().catch(console.error);
+```
+
+Once the script finishes, you will find `output.mp4` in your project directory.
+
+## 3. Run the Script
+
+Execute your script using a TypeScript runner like tsx:
+
+<CliCommandCode action="run" command="tsx render.ts" />
+
+## 4. Preview Your Project
+
+Before rendering, you can preview your project in the browser using the `@light-render/player` component. This allows you to see exactly what your video will look like:
+
+```tsx
+import { LightRenderPlayer } from "@light-render/player";
+
+function App() {
+    return <LightRenderPlayer project={project} autoPlay={true} loop={true} />;
+}
+```
+
+The player provides real-time 60fps preview with full playback controls, just like the preview below:
+
+<HelloWorldPreview />
+
+## Next Steps
+
+Now that you've rendered your first video, explore the rest of the documentation to learn more:
+
+- [Effects Registry](#): Add cinematic effects like the Repeating Zoom.
+- [Player Component](#): Preview your projects in the browser using `@light-render/player`.
+- [Creating Custom Effects](#): Learn how to build your own effects and properties.
