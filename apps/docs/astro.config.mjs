@@ -53,6 +53,10 @@ export default defineConfig({
                     ],
                 },
                 {
+                    label: "Core Concepts",
+                    items: [{ label: "Engine", slug: "core-concepts/engine" }],
+                },
+                {
                     label: "Effects",
                     items: [{ autogenerate: { directory: "effects" } }],
                 },

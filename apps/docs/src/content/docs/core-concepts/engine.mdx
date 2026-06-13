@@ -1,0 +1,84 @@
+---
+title: Engine
+description: Orchestrates validation and delegates rendering to FFmpeg or Canvas.
+---
+
+The **Engine** is the central orchestrator of LightRender. It acts as the bridge between your declarative project JSON and the actual rendering pipeline.
+
+Its primary responsibilities are:
+
+- **Environment Detection:** Automatically selects the correct renderer (Node.js FFmpeg vs. Browser Canvas).
+- **Validation:** Enforces strict type safety using shared Zod schemas before any processing begins.
+- **Orchestration:** Converts raw data into executable Segment instances and manages the render lifecycle.
+
+## Basic Usage
+
+The Engine is lazy-loaded. It does not initialize heavy dependencies until you call `.render()`.
+
+```tsx
+import { Engine, Config } from "@light-render/core";
+
+// 1. Define global configuration
+const config = new Config({
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    codec: "h264",
+    quality: "high",
+});
+
+// 2. Initialize the engine
+const engine = new Engine(config);
+
+// 3. Render your project
+await engine.render(myProjectData, "./output/video.mp4");
+```
+
+## How It Works
+
+### 1. Lazy Renderer Initialization
+
+The Engine detects the runtime environment at execution time, not build time. This allows the same codebase to work in both Node.js and browser environments without bundling errors.
+
+- **Node.js**: Dynamically imports `FfmpegRenderer` and spawns native FFmpeg processes.
+- **Browser**: Throws a descriptive error directing you to use `renderFrame()` for previews. WASM FFmpeg support is planned for future releases.
+
+### 2. Strict Validation Pipeline
+
+Before rendering begins, the Engine validates your entire project structure against the shared schema (`@light-render/shared`).
+Catches malformed segments, missing layers, or invalid effect parameters early.
+
+- Ensures type safety across the Python/TypeScript boundary.
+- Prevents silent failures during long render jobs.
+
+### 3. Dynamic Configuration Merging
+
+The Engine supports two levels of configuration:
+
+| Level         | Source                                    | Priority         |
+| ------------- | ----------------------------------------- | ---------------- |
+| `Global`      | `new Config({...})` passed to constructor | Default fallback |
+| `Per-Project` | `project.config` inside the project JSON  | Overrides global |
+
+If a project includes its own config, the Engine automatically updates its internal state and resets the renderer to apply the new settings.
+
+## API Reference
+
+### new Engine(config: Config)
+
+Creates a new rendering engine instance.
+
+| Parameter | Type     | Description                          |
+| --------- | -------- | ------------------------------------ |
+| `config`  | `Config` | Global render configuration defaults |
+
+### engine.render(project, outputPath)
+
+Executes the full render pipeline.
+
+| Parameter    | Type            | Description                                |
+| ------------ | --------------- | ------------------------------------------ |
+| `project`    | `SharedProject` | Validated project JSON with segments       |
+| `outputPath` | `string`        | Destination file path for the output video |
+
+> ⚠️ **Browser Limitation**: Calling `.render()` in a browser environment will throw an error. Use `@light-render/player` or `renderFrame()` for browser-based previews.
